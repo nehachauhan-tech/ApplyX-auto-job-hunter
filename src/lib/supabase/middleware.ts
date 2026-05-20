@@ -29,36 +29,67 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes
-  const protectedPaths = ["/dashboard", "/profile", "/applications", "/settings"];
-  const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const pathname = request.nextUrl.pathname;
 
-  // Auth routes (redirect if already logged in)
+  const protectedPaths = ["/dashboard", "/profile", "/applications", "/settings", "/jobs", "/resumes"];
+  const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path));
+
   const authPaths = ["/login", "/signup"];
-  const isAuthPath = authPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
 
   if (isProtectedPath && !user) {
-    // Redirect to login if trying to access protected route without auth
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    url.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (isAuthPath && user) {
-    // Redirect to dashboard if already logged in
+  if (pathname === "/onboarding" && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  if (user && (isAuthPath || isProtectedPath)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone, location, headline")
+      .eq("id", user.id)
+      .single();
+
+    const needsOnboarding = !profile?.full_name || !profile?.phone || !profile?.location || !profile?.headline;
+
+    if (isAuthPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = needsOnboarding ? "/onboarding" : "/dashboard";
+      return NextResponse.redirect(url);
+    }
+
+    if (isProtectedPath && needsOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (user && pathname === "/onboarding") {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone, location, headline")
+      .eq("id", user.id)
+      .single();
+
+    const needsOnboarding = !profile?.full_name || !profile?.phone || !profile?.location || !profile?.headline;
+
+    if (!needsOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

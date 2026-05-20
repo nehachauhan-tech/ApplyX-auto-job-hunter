@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,37 +18,76 @@ import {
   Target,
   DollarSign,
   Building2,
+  Upload,
+  FileText,
+  Loader2,
+  X,
+  CheckCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Step = 1 | 2 | 3 | 4;
 
 interface FormData {
-  // Step 1: Basic Info
   full_name: string;
   phone: string;
   location: string;
   headline: string;
   bio: string;
-  // Step 2: Online Presence
   linkedin_url: string;
   github_url: string;
   portfolio_url: string;
-  // Step 3: Job Preferences
   desired_roles: string[];
   desired_locations: string[];
   remote_preference: string;
   experience_level: string;
   job_types: string[];
-  // Step 4: Salary & Industries
   min_salary: string;
   max_salary: string;
   salary_currency: string;
   industries: string[];
 }
 
+interface ParsedResumeData {
+  personal_info?: {
+    full_name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedin_url?: string;
+    github_url?: string;
+    portfolio_url?: string;
+  };
+  professional_summary?: string;
+  headline?: string;
+  skills?: string[];
+  experience?: Array<{
+    company: string;
+    title: string;
+    location?: string;
+    start_date?: string;
+    end_date?: string;
+    description?: string;
+    highlights?: string[];
+  }>;
+  education?: Array<{
+    institution: string;
+    degree: string;
+    field?: string;
+    start_date?: string;
+    end_date?: string;
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer?: string;
+    date?: string;
+  }>;
+  experience_level?: string;
+  total_experience_years?: number;
+}
+
 const steps = [
-  { number: 1, title: "Basic Info", icon: User },
+  { number: 1, title: "Resume & Info", icon: FileText },
   { number: 2, title: "Online Presence", icon: Globe },
   { number: 3, title: "Job Preferences", icon: Target },
   { number: 4, title: "Salary & Industries", icon: DollarSign },
@@ -69,13 +108,7 @@ const remoteOptions = [
   { value: "any", label: "Any" },
 ];
 
-const jobTypeOptions = [
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Freelance",
-  "Internship",
-];
+const jobTypeOptions = ["Full-time", "Part-time", "Contract", "Freelance", "Internship"];
 
 const industryOptions = [
   "Technology",
@@ -101,9 +134,16 @@ const currencyOptions = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeParsed, setResumeParsed] = useState(false);
+  const [parseProgress, setParseProgress] = useState("");
+
   const [formData, setFormData] = useState<FormData>({
     full_name: "",
     phone: "",
@@ -130,7 +170,9 @@ export default function OnboardingPage() {
   useEffect(() => {
     const loadExistingData = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (user) {
         const { data: profile } = await supabase
@@ -183,14 +225,23 @@ export default function OnboardingPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addToArray = (field: "desired_roles" | "desired_locations" | "job_types" | "industries", value: string) => {
+  const addToArray = (
+    field: "desired_roles" | "desired_locations" | "job_types" | "industries",
+    value: string
+  ) => {
     if (value.trim() && !formData[field].includes(value.trim())) {
       updateField(field, [...formData[field], value.trim()]);
     }
   };
 
-  const removeFromArray = (field: "desired_roles" | "desired_locations" | "job_types" | "industries", value: string) => {
-    updateField(field, formData[field].filter((item) => item !== value));
+  const removeFromArray = (
+    field: "desired_roles" | "desired_locations" | "job_types" | "industries",
+    value: string
+  ) => {
+    updateField(
+      field,
+      formData[field].filter((item) => item !== value)
+    );
   };
 
   const toggleInArray = (field: "job_types" | "industries", value: string) => {
@@ -198,6 +249,111 @@ export default function OnboardingPage() {
       removeFromArray(field, value);
     } else {
       addToArray(field, value);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      setError("Please upload a PDF file");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File size must be less than 10MB");
+      return;
+    }
+
+    setResumeFile(file);
+    setError(null);
+    await parseResume(file);
+  };
+
+  const parseResume = async (file: File) => {
+    setIsParsingResume(true);
+    setParseProgress("Uploading resume...");
+    setError(null);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      setParseProgress("Analyzing resume with AI...");
+
+      const response = await fetch("/api/resume/parse", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to parse resume");
+      }
+
+      const result = await response.json();
+      const parsedData: ParsedResumeData = result.data;
+
+      setParseProgress("Extracting information...");
+
+      if (parsedData.personal_info) {
+        setFormData((prev) => ({
+          ...prev,
+          full_name: parsedData.personal_info?.full_name || prev.full_name,
+          phone: parsedData.personal_info?.phone || prev.phone,
+          location: parsedData.personal_info?.location || prev.location,
+          linkedin_url: parsedData.personal_info?.linkedin_url || prev.linkedin_url,
+          github_url: parsedData.personal_info?.github_url || prev.github_url,
+          portfolio_url: parsedData.personal_info?.portfolio_url || prev.portfolio_url,
+        }));
+      }
+
+      if (parsedData.headline) {
+        setFormData((prev) => ({ ...prev, headline: parsedData.headline || prev.headline }));
+      }
+
+      if (parsedData.professional_summary) {
+        setFormData((prev) => ({ ...prev, bio: parsedData.professional_summary || prev.bio }));
+      }
+
+      if (parsedData.experience_level) {
+        setFormData((prev) => ({
+          ...prev,
+          experience_level: parsedData.experience_level || prev.experience_level,
+        }));
+      }
+
+      if (parsedData.experience && parsedData.experience.length > 0) {
+        const roles = parsedData.experience.map((exp) => exp.title).filter(Boolean);
+        const uniqueRoles = Array.from(new Set(roles)).slice(0, 5);
+        if (uniqueRoles.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            desired_roles: uniqueRoles,
+          }));
+        }
+      }
+
+      setResumeParsed(true);
+      setParseProgress("Resume parsed successfully!");
+
+      setTimeout(() => {
+        setParseProgress("");
+      }, 2000);
+    } catch (err) {
+      console.error("Resume parse error:", err);
+      setError(err instanceof Error ? err.message : "Failed to parse resume");
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
+  const removeResume = () => {
+    setResumeFile(null);
+    setResumeParsed(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -236,7 +392,9 @@ export default function OnboardingPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         setError("You must be logged in to complete onboarding.");
@@ -289,7 +447,6 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-primary-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="w-8 h-8 text-primary-600" />
@@ -298,7 +455,6 @@ export default function OnboardingPage() {
           <p className="text-dark-300">Let&apos;s set you up for job search success</p>
         </div>
 
-        {/* Progress Steps */}
         <div className="max-w-3xl mx-auto mb-8">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => {
@@ -322,7 +478,11 @@ export default function OnboardingPage() {
                     </div>
                     <span
                       className={`text-xs mt-2 font-medium ${
-                        isActive ? "text-primary-600" : isComplete ? "text-accent-green" : "text-dark-300"
+                        isActive
+                          ? "text-primary-600"
+                          : isComplete
+                          ? "text-accent-green"
+                          : "text-dark-300"
                       }`}
                     >
                       {step.title}
@@ -341,7 +501,6 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Form Card */}
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             {error && (
@@ -358,88 +517,177 @@ export default function OnboardingPage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Step 1: Basic Info */}
                 {currentStep === 1 && (
                   <div className="space-y-6">
-                    <h2 className="text-xl font-semibold text-dark-700 mb-4">Tell us about yourself</h2>
+                    <h2 className="text-xl font-semibold text-dark-700 mb-4">
+                      Upload Resume & Basic Info
+                    </h2>
 
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">
-                        Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
-                        <input
-                          type="text"
-                          value={formData.full_name}
-                          onChange={(e) => updateField("full_name", e.target.value)}
-                          className="input-field pl-12"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">
-                        Phone Number <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
-                        <input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(e) => updateField("phone", e.target.value)}
-                          className="input-field pl-12"
-                          placeholder="+1 (555) 123-4567"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">
-                        Location <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
-                        <input
-                          type="text"
-                          value={formData.location}
-                          onChange={(e) => updateField("location", e.target.value)}
-                          className="input-field pl-12"
-                          placeholder="San Francisco, CA"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">
-                        Professional Headline <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
-                        <input
-                          type="text"
-                          value={formData.headline}
-                          onChange={(e) => updateField("headline", e.target.value)}
-                          className="input-field pl-12"
-                          placeholder="Senior Software Engineer | React & Node.js"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Bio (Optional)</label>
-                      <textarea
-                        value={formData.bio}
-                        onChange={(e) => updateField("bio", e.target.value)}
-                        className="input-field min-h-[100px] resize-none"
-                        placeholder="Tell us a bit about yourself and your career goals..."
+                    <div className="bg-gradient-to-r from-primary-50 to-accent-gold/10 rounded-xl border-2 border-dashed border-primary-200 p-6">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="resume-upload"
                       />
+
+                      {!resumeFile ? (
+                        <label
+                          htmlFor="resume-upload"
+                          className="flex flex-col items-center cursor-pointer"
+                        >
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                            <Upload className="w-8 h-8 text-primary-600" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-dark-700 mb-2">
+                            Upload Your Resume (Optional)
+                          </h3>
+                          <p className="text-dark-400 text-sm text-center max-w-md mb-4">
+                            Upload your resume and our AI will automatically extract your
+                            information to fill out the form.
+                          </p>
+                          <span className="px-6 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors">
+                            Choose PDF File
+                          </span>
+                          <p className="text-xs text-dark-300 mt-2">PDF only, max 10MB</p>
+                        </label>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                resumeParsed ? "bg-accent-green/20" : "bg-primary-100"
+                              }`}
+                            >
+                              {isParsingResume ? (
+                                <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+                              ) : resumeParsed ? (
+                                <CheckCircle className="w-6 h-6 text-accent-green" />
+                              ) : (
+                                <FileText className="w-6 h-6 text-primary-600" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-dark-700">{resumeFile.name}</p>
+                              <p className="text-sm text-dark-400">
+                                {isParsingResume
+                                  ? parseProgress
+                                  : resumeParsed
+                                  ? "Resume parsed successfully!"
+                                  : `${(resumeFile.size / 1024 / 1024).toFixed(2)} MB`}
+                              </p>
+                            </div>
+                          </div>
+                          {!isParsingResume && (
+                            <button
+                              onClick={removeResume}
+                              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <X className="w-5 h-5 text-dark-400 hover:text-red-500" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {resumeParsed && (
+                      <div className="flex items-center gap-2 p-3 bg-accent-green/10 rounded-xl text-accent-green text-sm">
+                        <CheckCircle className="w-5 h-5" />
+                        <span>
+                          Form fields have been auto-filled from your resume. Please review and edit
+                          if needed.
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="border-t border-primary-100 pt-6">
+                      <p className="text-sm text-dark-400 mb-4">
+                        Or fill in your details manually:
+                      </p>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-dark-700 mb-2">
+                            Full Name <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
+                            <input
+                              type="text"
+                              value={formData.full_name}
+                              onChange={(e) => updateField("full_name", e.target.value)}
+                              className="input-field pl-12"
+                              placeholder="John Doe"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-dark-700 mb-2">
+                            Phone Number <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
+                            <input
+                              type="tel"
+                              value={formData.phone}
+                              onChange={(e) => updateField("phone", e.target.value)}
+                              className="input-field pl-12"
+                              placeholder="+1 (555) 123-4567"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-dark-700 mb-2">
+                            Location <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
+                            <input
+                              type="text"
+                              value={formData.location}
+                              onChange={(e) => updateField("location", e.target.value)}
+                              className="input-field pl-12"
+                              placeholder="San Francisco, CA"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-dark-700 mb-2">
+                            Professional Headline <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
+                            <input
+                              type="text"
+                              value={formData.headline}
+                              onChange={(e) => updateField("headline", e.target.value)}
+                              className="input-field pl-12"
+                              placeholder="Senior Software Engineer | React & Node.js"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-dark-700 mb-2">
+                            Bio / Summary (Optional)
+                          </label>
+                          <textarea
+                            value={formData.bio}
+                            onChange={(e) => updateField("bio", e.target.value)}
+                            className="input-field min-h-[100px] resize-none"
+                            placeholder="Tell us about yourself and your career goals..."
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Step 2: Online Presence */}
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <h2 className="text-xl font-semibold text-dark-700 mb-4">Your Online Presence</h2>
@@ -448,7 +696,9 @@ export default function OnboardingPage() {
                     </p>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">LinkedIn Profile</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        LinkedIn Profile
+                      </label>
                       <div className="relative">
                         <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
                         <input
@@ -462,7 +712,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">GitHub Profile</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        GitHub Profile
+                      </label>
                       <div className="relative">
                         <Code2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
                         <input
@@ -476,7 +728,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Portfolio Website</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        Portfolio Website
+                      </label>
                       <div className="relative">
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-200" />
                         <input
@@ -491,7 +745,6 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {/* Step 3: Job Preferences */}
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <h2 className="text-xl font-semibold text-dark-700 mb-4">Job Preferences</h2>
@@ -546,7 +799,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Preferred Locations</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        Preferred Locations
+                      </label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -593,7 +848,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Work Arrangement</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        Work Arrangement
+                      </label>
                       <div className="grid grid-cols-2 gap-3">
                         {remoteOptions.map((option) => (
                           <button
@@ -613,7 +870,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Experience Level</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        Experience Level
+                      </label>
                       <select
                         value={formData.experience_level}
                         onChange={(e) => updateField("experience_level", e.target.value)}
@@ -651,13 +910,16 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {/* Step 4: Salary & Industries */}
                 {currentStep === 4 && (
                   <div className="space-y-6">
-                    <h2 className="text-xl font-semibold text-dark-700 mb-4">Salary & Industries</h2>
+                    <h2 className="text-xl font-semibold text-dark-700 mb-4">
+                      Salary & Industries
+                    </h2>
 
                     <div>
-                      <label className="block text-sm font-medium text-dark-700 mb-2">Expected Salary Range</label>
+                      <label className="block text-sm font-medium text-dark-700 mb-2">
+                        Expected Salary Range
+                      </label>
                       <div className="grid grid-cols-3 gap-3">
                         <div>
                           <select
@@ -725,8 +987,9 @@ export default function OnboardingPage() {
                         <div>
                           <h3 className="font-semibold text-dark-700 mb-1">You&apos;re all set!</h3>
                           <p className="text-sm text-dark-400">
-                            We&apos;ll use your preferences to find the best job matches and optimize your applications.
-                            You can update these anytime from your profile settings.
+                            We&apos;ll use your preferences to find the best job matches and
+                            optimize your applications. You can update these anytime from your
+                            profile settings.
                           </p>
                         </div>
                       </div>
@@ -736,7 +999,6 @@ export default function OnboardingPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-primary-100">
               <button
                 type="button"
@@ -756,7 +1018,7 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!validateStep(currentStep)}
+                  disabled={!validateStep(currentStep) || isParsingResume}
                   className="btn-primary flex items-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue

@@ -17,14 +17,13 @@ export default function SignupPage() {
     password: "",
   });
 
-  const supabase = createClient();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -53,6 +52,7 @@ export default function SignupPage() {
     setError(null);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

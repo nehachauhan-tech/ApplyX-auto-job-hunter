@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #F5F0E8;
+  --background: #FFF8E7;
   --foreground: #1A1A1A;
 }
 
@@ -24,23 +24,29 @@ body {
 
 @layer components {
   .glass-card {
-    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-lg;
+    @apply bg-white/60 backdrop-blur-xl border border-primary-200/30 shadow-lg;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-charcoal-900 via-charcoal-700 to-charcoal-900 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 bg-clip-text text-transparent;
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-charcoal-900 text-cream-100 rounded-full font-medium
-           transition-all duration-300 hover:bg-charcoal-700 hover:shadow-lg
-           hover:shadow-charcoal-900/20 active:scale-95;
+    @apply px-6 py-3 bg-primary-500 text-white rounded-full font-medium
+           transition-all duration-300 hover:bg-primary-600 hover:shadow-lg
+           hover:shadow-primary-500/20 active:scale-95;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-transparent border-2 border-charcoal-900 text-charcoal-900
+    @apply px-6 py-3 bg-transparent border-2 border-dark-700 text-dark-700
            rounded-full font-medium transition-all duration-300
-           hover:bg-charcoal-900 hover:text-cream-100 active:scale-95;
+           hover:bg-dark-700 hover:text-cream-100 active:scale-95;
+  }
+
+  .btn-dark {
+    @apply px-6 py-3 bg-dark-700 text-cream-100 rounded-full font-medium
+           transition-all duration-300 hover:bg-dark-600 hover:shadow-lg
+           active:scale-95;
   }
 
   .section-padding {
@@ -49,6 +55,17 @@ body {
 
   .container-max {
     @apply max-w-7xl mx-auto;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-primary-200 rounded-xl
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-all duration-200 text-dark-700 placeholder:text-dark-100;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-primary-100 shadow-sm
+           hover:shadow-lg transition-all duration-300;
   }
 }
 
@@ -68,14 +85,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5F0E8;
+  background: #FFF8E7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C9B99F;
+  background: #C9A227;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B5A58B;
+  background: #B8860B;
 }

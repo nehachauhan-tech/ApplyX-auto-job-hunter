@@ -20,9 +20,9 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-accent-sand/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-teal/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cream-300/50 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-300/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-blue/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-100/50 rounded-full blur-3xl" />
       </div>
 
       {floatingIcons.map(({ Icon, delay, x, y }, index) => (
@@ -37,9 +37,9 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 4, repeat: Infinity, delay: delay }}
-            className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg"
+            className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-primary-100"
           >
-            <Icon className="w-6 h-6 text-charcoal-700" />
+            <Icon className="w-6 h-6 text-primary-600" />
           </motion.div>
         </motion.div>
       ))}
@@ -50,10 +50,10 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-beige-200 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-primary-200 mb-6"
           >
-            <span className="w-2 h-2 bg-accent-teal rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-charcoal-700">
+            <span className="w-2 h-2 bg-accent-blue rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-dark-300">
               AI-Powered Job Hunting Platform
             </span>
           </motion.div>
@@ -62,12 +62,12 @@ export default function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-charcoal-900 leading-tight mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-dark-700 leading-tight mb-6"
           >
             Land Your Dream Job
             <br />
             <span className="relative">
-              <span className="relative z-10">Automatically</span>
+              <span className="relative z-10 text-primary-500">Automatically</span>
               <motion.svg
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
@@ -78,7 +78,7 @@ export default function Hero() {
               >
                 <motion.path
                   d="M2 10C50 2 100 2 150 6C200 10 250 6 298 2"
-                  stroke="#E07A5F"
+                  stroke="#C9A227"
                   strokeWidth="4"
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
@@ -93,7 +93,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-charcoal-700 max-w-2xl mx-auto mb-8 leading-relaxed"
+            className="text-lg sm:text-xl text-dark-200 max-w-2xl mx-auto mb-8 leading-relaxed"
           >
             Connect with LinkedIn, Indeed, Naukri, Unstop & more. Let AI craft
             ATS-optimized resumes and auto-apply to hundreds of jobs while you
@@ -107,7 +107,7 @@ export default function Hero() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
           >
             <Link
-              href="#"
+              href="/signup"
               className="btn-primary flex items-center gap-2 text-base px-8 py-4"
             >
               Start Free Trial
@@ -127,10 +127,10 @@ export default function Hero() {
           >
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-charcoal-900">
+                <div className="text-2xl sm:text-3xl font-bold text-dark-700">
                   {stat.value}
                 </div>
-                <div className="text-sm text-charcoal-600">{stat.label}</div>
+                <div className="text-sm text-dark-200">{stat.label}</div>
               </div>
             ))}
           </motion.div>
@@ -143,16 +143,16 @@ export default function Hero() {
           className="mt-16 relative"
         >
           <div className="relative max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-beige-100 via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl border border-beige-200 overflow-hidden">
-              <div className="bg-beige-100 px-4 py-3 flex items-center gap-2">
+            <div className="absolute inset-0 bg-gradient-to-t from-cream-100 via-transparent to-transparent z-10 pointer-events-none" />
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl border border-primary-100 overflow-hidden">
+              <div className="bg-dark-700 px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-accent-orange" />
-                  <div className="w-3 h-3 rounded-full bg-accent-sand" />
-                  <div className="w-3 h-3 rounded-full bg-accent-teal" />
+                  <div className="w-3 h-3 rounded-full bg-accent-red" />
+                  <div className="w-3 h-3 rounded-full bg-primary-400" />
+                  <div className="w-3 h-3 rounded-full bg-accent-green" />
                 </div>
                 <div className="flex-1 text-center">
-                  <span className="text-sm text-charcoal-600">
+                  <span className="text-sm text-cream-200">
                     ApplyX Dashboard
                   </span>
                 </div>
@@ -163,7 +163,7 @@ export default function Hero() {
                     title="Applications Today"
                     value="47"
                     change="+12%"
-                    color="teal"
+                    color="blue"
                   />
                   <DashboardCard
                     title="Interview Invites"
@@ -175,12 +175,12 @@ export default function Hero() {
                     title="Profile Views"
                     value="234"
                     change="+28%"
-                    color="sand"
+                    color="green"
                   />
                 </div>
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div className="bg-cream-100 rounded-xl p-4 sm:p-6">
-                    <h3 className="font-semibold text-charcoal-900 mb-4">
+                    <h3 className="font-semibold text-dark-700 mb-4">
                       Recent Applications
                     </h3>
                     <div className="space-y-3">
@@ -203,23 +203,23 @@ export default function Hero() {
                       ].map((job, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between bg-white/80 rounded-lg p-3"
+                          className="flex items-center justify-between bg-white/80 rounded-lg p-3 border border-primary-100"
                         >
                           <div>
-                            <div className="font-medium text-charcoal-900 text-sm">
+                            <div className="font-medium text-dark-700 text-sm">
                               {job.role}
                             </div>
-                            <div className="text-xs text-charcoal-600">
+                            <div className="text-xs text-dark-200">
                               {job.company}
                             </div>
                           </div>
                           <span
                             className={`text-xs px-2 py-1 rounded-full ${
                               job.status === "Interview"
-                                ? "bg-accent-teal/20 text-accent-teal"
+                                ? "bg-accent-green/20 text-accent-green"
                                 : job.status === "In Review"
-                                ? "bg-accent-sand/30 text-charcoal-700"
-                                : "bg-beige-200 text-charcoal-600"
+                                ? "bg-primary-100 text-primary-600"
+                                : "bg-accent-blue/10 text-accent-blue"
                             }`}
                           >
                             {job.status}
@@ -229,7 +229,7 @@ export default function Hero() {
                     </div>
                   </div>
                   <div className="bg-cream-100 rounded-xl p-4 sm:p-6">
-                    <h3 className="font-semibold text-charcoal-900 mb-4">
+                    <h3 className="font-semibold text-dark-700 mb-4">
                       AI Resume Score
                     </h3>
                     <div className="flex items-center justify-center">
@@ -243,7 +243,7 @@ export default function Hero() {
                             cy="50"
                             r="40"
                             fill="none"
-                            stroke="#E5D9CB"
+                            stroke="#FFF0BF"
                             strokeWidth="12"
                           />
                           <circle
@@ -251,7 +251,7 @@ export default function Hero() {
                             cy="50"
                             r="40"
                             fill="none"
-                            stroke="#81B29A"
+                            stroke="#C9A227"
                             strokeWidth="12"
                             strokeDasharray="251.2"
                             strokeDashoffset="37.68"
@@ -259,13 +259,13 @@ export default function Hero() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-charcoal-900">
+                          <span className="text-2xl font-bold text-dark-700">
                             85%
                           </span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-center text-sm text-charcoal-600 mt-4">
+                    <p className="text-center text-sm text-dark-200 mt-4">
                       Your resume is ATS-optimized
                     </p>
                   </div>
@@ -288,24 +288,24 @@ function DashboardCard({
   title: string;
   value: string;
   change: string;
-  color: "teal" | "orange" | "sand";
+  color: "blue" | "orange" | "green";
 }) {
   const colorClasses = {
-    teal: "bg-accent-teal/10 border-accent-teal/20",
-    orange: "bg-accent-orange/10 border-accent-orange/20",
-    sand: "bg-accent-sand/20 border-accent-sand/30",
+    blue: "bg-accent-blue/10 border-accent-blue/20",
+    orange: "bg-primary-100 border-primary-200",
+    green: "bg-accent-green/10 border-accent-green/20",
   };
 
   return (
     <div
       className={`rounded-xl p-4 sm:p-6 border ${colorClasses[color]} transition-transform hover:scale-105`}
     >
-      <div className="text-sm text-charcoal-600 mb-2">{title}</div>
+      <div className="text-sm text-dark-200 mb-2">{title}</div>
       <div className="flex items-end justify-between">
-        <span className="text-2xl sm:text-3xl font-bold text-charcoal-900">
+        <span className="text-2xl sm:text-3xl font-bold text-dark-700">
           {value}
         </span>
-        <span className="text-sm text-accent-teal font-medium">{change}</span>
+        <span className="text-sm text-accent-green font-medium">{change}</span>
       </div>
     </div>
   );

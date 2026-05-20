@@ -51,14 +51,14 @@ export default function FAQ() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-beige-200 mb-4">
-            <HelpCircle className="w-4 h-4 text-accent-teal" />
-            <span className="text-sm font-medium text-charcoal-700">FAQs</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-primary-200 mb-4">
+            <HelpCircle className="w-4 h-4 text-primary-500" />
+            <span className="text-sm font-medium text-dark-300">FAQs</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-charcoal-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-dark-700 mb-4">
             Frequently Asked Questions
           </h2>
-          <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
+          <p className="text-lg text-dark-200 max-w-2xl mx-auto">
             Got questions? We&apos;ve got answers. If you can&apos;t find what you&apos;re
             looking for, reach out to our support team.
           </p>
@@ -77,14 +77,14 @@ export default function FAQ() {
                 onClick={() =>
                   setOpenIndex(openIndex === index ? null : index)
                 }
-                className="w-full bg-white rounded-xl p-5 border border-beige-200 hover:border-beige-300 transition-all duration-200 text-left"
+                className="w-full bg-white rounded-xl p-5 border border-primary-100 hover:border-primary-200 transition-all duration-200 text-left"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h3 className="font-semibold text-charcoal-900">
+                  <h3 className="font-semibold text-dark-700">
                     {faq.question}
                   </h3>
                   <ChevronDown
-                    className={`w-5 h-5 text-charcoal-500 transition-transform duration-300 flex-shrink-0 ${
+                    className={`w-5 h-5 text-dark-200 transition-transform duration-300 flex-shrink-0 ${
                       openIndex === index ? "rotate-180" : ""
                     }`}
                   />
@@ -98,7 +98,7 @@ export default function FAQ() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <p className="text-charcoal-600 mt-4 leading-relaxed">
+                      <p className="text-dark-200 mt-4 leading-relaxed">
                         {faq.answer}
                       </p>
                     </motion.div>

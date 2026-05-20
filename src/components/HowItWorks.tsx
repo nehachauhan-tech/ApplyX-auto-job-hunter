@@ -52,17 +52,17 @@ export default function HowItWorks() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-charcoal-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-dark-700 mb-4">
             How It Works
           </h2>
-          <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
+          <p className="text-lg text-dark-200 max-w-2xl mx-auto">
             Get started in minutes. Our streamlined process makes job hunting
             effortless.
           </p>
         </motion.div>
 
         <div className="relative">
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-beige-300 -translate-y-1/2" />
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-primary-200 -translate-y-1/2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
             {steps.map((step, index) => (
@@ -73,18 +73,18 @@ export default function HowItWorks() {
                 transition={{ duration: 0.5, delay: index * 0.15 }}
                 className="relative"
               >
-                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-beige-200 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-primary-100 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
                   <div className="relative z-10 flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-charcoal-900 rounded-2xl flex items-center justify-center mb-6 relative">
+                    <div className="w-16 h-16 bg-dark-700 rounded-2xl flex items-center justify-center mb-6 relative">
                       <step.icon className="w-8 h-8 text-cream-100" />
-                      <span className="absolute -top-2 -right-2 w-8 h-8 bg-accent-orange text-white text-sm font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-2 -right-2 w-8 h-8 bg-primary-500 text-white text-sm font-bold rounded-full flex items-center justify-center">
                         {step.step}
                       </span>
                     </div>
-                    <h3 className="text-xl font-semibold text-charcoal-900 mb-3">
+                    <h3 className="text-xl font-semibold text-dark-700 mb-3">
                       {step.title}
                     </h3>
-                    <p className="text-charcoal-600 leading-relaxed">
+                    <p className="text-dark-200 leading-relaxed">
                       {step.description}
                     </p>
                   </div>

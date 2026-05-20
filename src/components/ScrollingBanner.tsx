@@ -24,7 +24,7 @@ export default function ScrollingBanner() {
   return (
     <section className="py-12 bg-cream-200 overflow-hidden">
       <div className="text-center mb-8">
-        <p className="text-sm font-medium text-charcoal-600 uppercase tracking-wider">
+        <p className="text-sm font-medium text-dark-200 uppercase tracking-wider">
           Our users have landed jobs at
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function ScrollingBanner() {
               key={index}
               className="flex items-center justify-center min-w-[150px]"
             >
-              <span className="text-xl font-semibold text-charcoal-400 hover:text-charcoal-700 transition-colors">
+              <span className="text-xl font-semibold text-dark-100 hover:text-primary-600 transition-colors">
                 {company}
               </span>
             </div>

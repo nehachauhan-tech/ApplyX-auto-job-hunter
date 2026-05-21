@@ -21,6 +21,9 @@ import {
   ExternalLink,
   AlertCircle,
   Key,
+  FileText,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 interface Job {
@@ -35,6 +38,8 @@ interface Job {
   salary_max?: number;
   salary_currency?: string;
   skills?: string[];
+  description?: string;
+  requirements?: string[];
   apply_url?: string;
   created_at: string;
   platform?: string;
@@ -45,20 +50,23 @@ interface JobMatchScore {
   overall_score: number;
   interview_probability: number;
   selection_probability: number;
+  skills_match?: {
+    score: number;
+    matched: string[];
+    missing: string[];
+  };
   strengths: string[];
   improvements: string[];
+  application_tips?: string[];
+  recruiter_perspective?: string;
 }
 
-interface ScrapedJob {
+interface Resume {
   id: string;
-  title: string;
-  company: string;
-  location: string;
-  isRemote: boolean;
-  jobType?: string;
-  salary?: { min?: number; max?: number; currency?: string };
-  skills?: string[];
-  applyUrl: string;
+  file_name: string;
+  skills: string[];
+  is_primary: boolean;
+  created_at: string;
 }
 
 interface ProgressState {
@@ -71,6 +79,8 @@ interface ProgressState {
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [matchScores, setMatchScores] = useState<Record<string, JobMatchScore>>({});
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -94,7 +104,7 @@ export default function JobsPage() {
   const [filters, setFilters] = useState({
     remote: false,
     jobType: "" as string,
-    platform: "linkedin" as "linkedin" | "indeed",
+    platform: "indeed" as "linkedin" | "indeed",
     minScore: 0,
   });
   const [maxResults, setMaxResults] = useState(10);
@@ -105,10 +115,29 @@ export default function JobsPage() {
       .from("jobs")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (jobsData) {
       setJobs(jobsData);
+    }
+  }, []);
+
+  const loadResumes = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: resumesData } = await supabase
+      .from("resumes")
+      .select("id, file_name, skills, is_primary, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (resumesData && resumesData.length > 0) {
+      setResumes(resumesData);
+      // Auto-select the most recent or primary resume
+      const primaryResume = resumesData.find(r => r.is_primary) || resumesData[0];
+      setSelectedResumeId(primaryResume.id);
     }
   }, []);
 
@@ -125,7 +154,17 @@ export default function JobsPage() {
     if (scores) {
       const scoresMap: Record<string, JobMatchScore> = {};
       scores.forEach((score) => {
-        scoresMap[score.job_id] = score;
+        scoresMap[score.job_id] = {
+          job_id: score.job_id,
+          overall_score: score.overall_score,
+          interview_probability: score.interview_probability,
+          selection_probability: score.selection_probability,
+          skills_match: score.skills_match,
+          strengths: score.strengths || [],
+          improvements: score.improvements || [],
+          application_tips: score.application_tips || [],
+          recruiter_perspective: score.recruiter_perspective,
+        };
       });
       setMatchScores(scoresMap);
     }
@@ -147,9 +186,10 @@ export default function JobsPage() {
 
   useEffect(() => {
     loadJobs();
+    loadResumes();
     loadMatchScores();
     checkApifyKey();
-  }, [loadJobs, loadMatchScores, checkApifyKey]);
+  }, [loadJobs, loadResumes, loadMatchScores, checkApifyKey]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -157,7 +197,6 @@ export default function JobsPage() {
     setIsSearching(true);
     setError(null);
 
-    // Start progress animation
     setSearchProgress({
       isActive: true,
       stage: "connecting",
@@ -165,7 +204,6 @@ export default function JobsPage() {
       message: "Connecting to job search service...",
     });
 
-    // Simulate progress stages
     const progressStages = [
       { progress: 15, stage: "initializing", message: "Initializing job scraper..." },
       { progress: 30, stage: "searching", message: `Searching for "${searchQuery}" jobs...` },
@@ -211,43 +249,19 @@ export default function JobsPage() {
         isActive: true,
         stage: "saving",
         progress: 95,
-        message: `Found ${data.jobs?.length || 0} jobs! Saving to database...`,
+        message: `Found ${data.count || 0} jobs! Saving to database...`,
       });
 
-      if (data.jobs && data.jobs.length > 0) {
-        const newJobs: Job[] = data.jobs.map((job: ScrapedJob) => ({
-          id: job.id,
-          title: job.title,
-          company_name: job.company,
-          location: job.location,
-          is_remote: job.isRemote,
-          job_type: job.jobType,
-          salary_min: job.salary?.min,
-          salary_max: job.salary?.max,
-          salary_currency: job.salary?.currency || "USD",
-          skills: job.skills,
-          apply_url: job.applyUrl,
-          created_at: new Date().toISOString(),
-          platform: filters.platform,
-        }));
-
-        setJobs((prev) => {
-          const existingIds = new Set(prev.map((j) => j.id));
-          const uniqueNewJobs = newJobs.filter((j) => !existingIds.has(j.id));
-          return [...uniqueNewJobs, ...prev];
-        });
-      }
-
+      // Reload jobs from database to get the saved versions with proper IDs
       await loadJobs();
 
       setSearchProgress({
         isActive: true,
         stage: "complete",
         progress: 100,
-        message: `Successfully loaded ${data.jobs?.length || 0} jobs!`,
+        message: `Successfully loaded ${data.count || 0} jobs!`,
       });
 
-      // Hide progress after 2 seconds
       setTimeout(() => {
         setSearchProgress({ isActive: false, stage: "", progress: 0, message: "" });
       }, 2000);
@@ -263,6 +277,10 @@ export default function JobsPage() {
 
   const analyzeMatches = async (jobIds: string[]) => {
     if (jobIds.length === 0) return;
+    if (!selectedResumeId) {
+      setError("Please select a resume for AI analysis");
+      return;
+    }
 
     setIsAnalyzing(true);
     setAnalysisProgress({
@@ -272,7 +290,6 @@ export default function JobsPage() {
       message: "Starting AI analysis...",
     });
 
-    // Simulate progress for batch analysis
     const totalJobs = jobIds.length;
     let analyzedCount = 0;
 
@@ -282,7 +299,7 @@ export default function JobsPage() {
         isActive: true,
         stage: "analyzing",
         progress: estimatedProgress,
-        message: `Analyzing job ${analyzedCount + 1} of ${totalJobs}... AI is evaluating your match`,
+        message: `Analyzing job ${Math.min(analyzedCount + 1, totalJobs)} of ${totalJobs}... AI is evaluating your match`,
       });
     }, 3000);
 
@@ -290,7 +307,7 @@ export default function JobsPage() {
       const response = await fetch("/api/jobs/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobIds }),
+        body: JSON.stringify({ jobIds, resumeId: selectedResumeId }),
       });
 
       clearInterval(progressInterval);
@@ -299,14 +316,17 @@ export default function JobsPage() {
 
       if (data.matches) {
         const newScores: Record<string, JobMatchScore> = { ...matchScores };
-        data.matches.forEach((match: { jobId: string; overallScore: number; interviewProbability: number; selectionProbability: number; strengths: string[]; improvements: string[] }) => {
+        data.matches.forEach((match: JobMatchScore & { jobId: string }) => {
           newScores[match.jobId] = {
             job_id: match.jobId,
-            overall_score: match.overallScore,
-            interview_probability: match.interviewProbability,
-            selection_probability: match.selectionProbability,
-            strengths: match.strengths,
-            improvements: match.improvements,
+            overall_score: match.overall_score || (match as unknown as { overallScore: number }).overallScore || 0,
+            interview_probability: match.interview_probability || (match as unknown as { interviewProbability: number }).interviewProbability || 0,
+            selection_probability: match.selection_probability || (match as unknown as { selectionProbability: number }).selectionProbability || 0,
+            skills_match: match.skills_match || (match as unknown as { skillsMatch: JobMatchScore["skills_match"] }).skillsMatch,
+            strengths: match.strengths || [],
+            improvements: match.improvements || [],
+            application_tips: match.application_tips || (match as unknown as { applicationTips: string[] }).applicationTips || [],
+            recruiter_perspective: match.recruiter_perspective || (match as unknown as { recruiterPerspective: string }).recruiterPerspective,
           };
           analyzedCount++;
         });
@@ -328,12 +348,18 @@ export default function JobsPage() {
       clearInterval(progressInterval);
       setAnalysisProgress({ isActive: false, stage: "", progress: 0, message: "" });
       console.error("Analysis failed:", err);
+      setError("AI analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   const analyzeSingleJob = async (jobId: string) => {
+    if (!selectedResumeId) {
+      setError("Please select a resume for AI analysis");
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisProgress({
       isActive: true,
@@ -356,7 +382,7 @@ export default function JobsPage() {
       const response = await fetch("/api/jobs/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ singleJobId: jobId }),
+        body: JSON.stringify({ singleJobId: jobId, resumeId: selectedResumeId }),
       });
 
       clearInterval(progressInterval);
@@ -372,8 +398,11 @@ export default function JobsPage() {
             overall_score: match.overallScore,
             interview_probability: match.interviewProbability,
             selection_probability: match.selectionProbability,
-            strengths: match.strengths,
-            improvements: match.improvements,
+            skills_match: match.skillsMatch,
+            strengths: match.strengths || [],
+            improvements: match.improvements || [],
+            application_tips: match.applicationTips || [],
+            recruiter_perspective: match.recruiterPerspective,
           },
         }));
 
@@ -424,7 +453,7 @@ export default function JobsPage() {
         {jobs.length > 0 && (
           <button
             onClick={() => analyzeMatches(jobs.slice(0, 10).map((j) => j.id))}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || !selectedResumeId}
             className="btn-secondary flex items-center gap-2"
           >
             {isAnalyzing ? (
@@ -432,7 +461,7 @@ export default function JobsPage() {
             ) : (
               <Sparkles className="w-5 h-5" />
             )}
-            Analyze All Matches
+            Analyze Top 10 Matches
           </button>
         )}
       </div>
@@ -505,7 +534,7 @@ export default function JobsPage() {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-primary-100 grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="mt-4 pt-4 border-t border-primary-100 grid grid-cols-2 md:grid-cols-6 gap-4">
             <div>
               <label className="block text-sm font-medium text-dark-600 mb-1.5">Platform</label>
               <select
@@ -513,8 +542,8 @@ export default function JobsPage() {
                 onChange={(e) => setFilters({ ...filters, platform: e.target.value as "linkedin" | "indeed" })}
                 className="input-field w-full"
               >
-                <option value="linkedin">LinkedIn</option>
                 <option value="indeed">Indeed</option>
+                <option value="linkedin">LinkedIn</option>
               </select>
             </div>
             <div>
@@ -546,7 +575,7 @@ export default function JobsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-dark-600 mb-1.5">Min Match Score</label>
+              <label className="block text-sm font-medium text-dark-600 mb-1.5">Min Match</label>
               <select
                 value={filters.minScore}
                 onChange={(e) => setFilters({ ...filters, minScore: parseInt(e.target.value) })}
@@ -558,6 +587,24 @@ export default function JobsPage() {
                 <option value="80">80%+</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-600 mb-1.5">Resume for AI</label>
+              <select
+                value={selectedResumeId}
+                onChange={(e) => setSelectedResumeId(e.target.value)}
+                className="input-field w-full"
+              >
+                {resumes.length === 0 ? (
+                  <option value="">No resumes uploaded</option>
+                ) : (
+                  resumes.map((resume) => (
+                    <option key={resume.id} value={resume.id}>
+                      {resume.file_name} {resume.is_primary ? "(Primary)" : ""}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
             <label className="flex items-center gap-2 cursor-pointer mt-6">
               <input
                 type="checkbox"
@@ -565,7 +612,7 @@ export default function JobsPage() {
                 onChange={(e) => setFilters({ ...filters, remote: e.target.checked })}
                 className="w-5 h-5 rounded text-primary-600 focus:ring-primary-500"
               />
-              <span className="font-medium text-dark-700">Remote Only</span>
+              <span className="font-medium text-dark-700">Remote</span>
             </label>
           </div>
         )}
@@ -641,6 +688,22 @@ export default function JobsPage() {
         </div>
       )}
 
+      {/* Jobs Count */}
+      {filteredJobs.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-dark-500">
+            Showing {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""}
+            {filters.minScore > 0 && ` with ${filters.minScore}%+ match`}
+          </p>
+          {resumes.length === 0 && (
+            <Link href="/resumes" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
+              <FileText className="w-4 h-4" />
+              Upload a resume for AI analysis
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Jobs List */}
       <div className="space-y-4">
         {filteredJobs.length > 0 ? (
@@ -684,8 +747,8 @@ export default function JobsPage() {
                         ) : (
                           <button
                             onClick={() => analyzeSingleJob(job.id)}
-                            disabled={isAnalyzing}
-                            className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                            disabled={isAnalyzing || !selectedResumeId}
+                            className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50"
                           >
                             <Target className="w-4 h-4" />
                             Analyze
@@ -734,21 +797,41 @@ export default function JobsPage() {
 
                     {/* Match Score Details */}
                     {score && (
-                      <div className="mt-3 flex flex-wrap gap-4 text-sm">
-                        <div className="flex items-center gap-1.5">
-                          <TrendingUp className="w-4 h-4 text-olive-600" />
-                          <span className="text-dark-500">Interview:</span>
-                          <span className="font-medium text-olive-700">{score.interview_probability}%</span>
+                      <div className="mt-3 p-3 bg-cream-50 rounded-lg space-y-2">
+                        <div className="flex flex-wrap gap-4 text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <TrendingUp className="w-4 h-4 text-olive-600" />
+                            <span className="text-dark-500">Interview:</span>
+                            <span className="font-medium text-olive-700">{score.interview_probability}%</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Target className="w-4 h-4 text-primary-600" />
+                            <span className="text-dark-500">Selection:</span>
+                            <span className="font-medium text-primary-700">{score.selection_probability}%</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Target className="w-4 h-4 text-primary-600" />
-                          <span className="text-dark-500">Selection:</span>
-                          <span className="font-medium text-primary-700">{score.selection_probability}%</span>
-                        </div>
+
+                        {/* Skills Match */}
+                        {score.skills_match && (
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-cream-200">
+                            {score.skills_match.matched?.slice(0, 3).map((skill) => (
+                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs">
+                                <CheckCircle className="w-3 h-3" />
+                                {skill}
+                              </span>
+                            ))}
+                            {score.skills_match.missing?.slice(0, 3).map((skill) => (
+                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-700 rounded text-xs">
+                                <XCircle className="w-3 h-3" />
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {job.skills && job.skills.length > 0 && (
+                    {job.skills && job.skills.length > 0 && !score && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {job.skills.slice(0, 5).map((skill: string) => (
                           <span
@@ -781,7 +864,7 @@ export default function JobsPage() {
             <p className="text-dark-400 max-w-md mx-auto">
               {filters.minScore > 0
                 ? `No jobs match your minimum score of ${filters.minScore}%. Try lowering the filter.`
-                : "Search for jobs to get started. We'll scrape the latest opportunities from LinkedIn and Indeed."}
+                : "Search for jobs to get started. We'll scrape the latest opportunities from Indeed."}
             </p>
           </div>
         )}
@@ -790,14 +873,14 @@ export default function JobsPage() {
       {/* Job Detail Modal */}
       {selectedJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-primary-100 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-dark-700">{selectedJob.title}</h2>
               <button onClick={() => setSelectedJob(null)} className="p-2 hover:bg-cream-100 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                   {selectedJob.company_logo_url ? (
@@ -818,9 +901,13 @@ export default function JobsPage() {
                 </div>
               </div>
 
+              {/* AI Match Analysis */}
               {matchScores[selectedJob.id] && (
-                <div className="bg-cream-50 rounded-xl p-4 space-y-3">
-                  <h3 className="font-semibold text-dark-700">AI Match Analysis</h3>
+                <div className="bg-cream-50 rounded-xl p-4 space-y-4">
+                  <h3 className="font-semibold text-dark-700 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-olive-600" />
+                    AI Match Analysis
+                  </h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <div className={`text-2xl font-bold ${getScoreColor(matchScores[selectedJob.id].overall_score).split(" ")[0]}`}>
@@ -842,31 +929,97 @@ export default function JobsPage() {
                     </div>
                   </div>
 
-                  {matchScores[selectedJob.id].strengths.length > 0 && (
+                  {/* Skills Analysis */}
+                  {matchScores[selectedJob.id].skills_match && (
+                    <div className="pt-4 border-t border-cream-200 space-y-3">
+                      <p className="text-sm font-medium text-dark-600">Skills Analysis</p>
+                      {matchScores[selectedJob.id].skills_match!.matched?.length > 0 && (
+                        <div>
+                          <p className="text-xs text-dark-400 mb-1">Matching Skills</p>
+                          <div className="flex flex-wrap gap-2">
+                            {matchScores[selectedJob.id].skills_match!.matched.map((skill) => (
+                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
+                                <CheckCircle className="w-3 h-3" />
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {matchScores[selectedJob.id].skills_match!.missing?.length > 0 && (
+                        <div>
+                          <p className="text-xs text-dark-400 mb-1">Missing Skills (Consider Learning)</p>
+                          <div className="flex flex-wrap gap-2">
+                            {matchScores[selectedJob.id].skills_match!.missing.map((skill) => (
+                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
+                                <XCircle className="w-3 h-3" />
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {matchScores[selectedJob.id].strengths?.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-dark-600 mb-1">Your Strengths</p>
+                      <p className="text-sm font-medium text-dark-600 mb-2">Your Strengths</p>
                       <ul className="text-sm text-dark-500 space-y-1">
                         {matchScores[selectedJob.id].strengths.map((s, i) => (
                           <li key={i} className="flex items-start gap-2">
-                            <span className="text-green-500">+</span> {s}
+                            <span className="text-green-500 mt-0.5">+</span> {s}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  {matchScores[selectedJob.id].improvements.length > 0 && (
+                  {matchScores[selectedJob.id].improvements?.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-dark-600 mb-1">Areas to Improve</p>
+                      <p className="text-sm font-medium text-dark-600 mb-2">Areas to Improve</p>
                       <ul className="text-sm text-dark-500 space-y-1">
                         {matchScores[selectedJob.id].improvements.map((s, i) => (
                           <li key={i} className="flex items-start gap-2">
-                            <span className="text-amber-500">-</span> {s}
+                            <span className="text-amber-500 mt-0.5">-</span> {s}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
+
+                  {matchScores[selectedJob.id].application_tips?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-dark-600 mb-2">Application Tips</p>
+                      <ul className="text-sm text-dark-500 space-y-1">
+                        {matchScores[selectedJob.id].application_tips!.map((tip, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-primary-500 mt-0.5">•</span> {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {matchScores[selectedJob.id].recruiter_perspective && (
+                    <div className="pt-3 border-t border-cream-200">
+                      <p className="text-sm font-medium text-dark-600 mb-2">Recruiter&apos;s Perspective</p>
+                      <p className="text-sm text-dark-500 italic">
+                        &quot;{matchScores[selectedJob.id].recruiter_perspective}&quot;
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Job Description */}
+              {selectedJob.description && (
+                <div>
+                  <h4 className="font-semibold text-dark-700 mb-2">Job Description</h4>
+                  <div className="text-sm text-dark-500 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                    {selectedJob.description.slice(0, 2000)}
+                    {selectedJob.description.length > 2000 && "..."}
+                  </div>
                 </div>
               )}
 
@@ -874,6 +1027,18 @@ export default function JobsPage() {
                 <button onClick={() => setSelectedJob(null)} className="flex-1 btn-secondary">
                   Close
                 </button>
+                {!matchScores[selectedJob.id] && (
+                  <button
+                    onClick={() => {
+                      analyzeSingleJob(selectedJob.id);
+                    }}
+                    disabled={isAnalyzing || !selectedResumeId}
+                    className="flex-1 btn-secondary flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Analyze Match
+                  </button>
+                )}
                 {selectedJob.apply_url && (
                   <a
                     href={selectedJob.apply_url}

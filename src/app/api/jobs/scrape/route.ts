@@ -55,41 +55,61 @@ export async function POST(request: Request) {
         }
       }
 
+      // Handle job_type which can be string or array
+      let jobType = job.jobType;
+      if (Array.isArray(jobType)) {
+        jobType = jobType[0] || null;
+      }
+
       return {
-        external_id: job.externalId,
-        platform: job.platform,
-        title: job.title,
-        company_name: job.company,
-        company_logo_url: job.companyLogo,
-        location: job.location,
-        is_remote: job.isRemote,
-        job_type: job.jobType,
-        salary_min: job.salary?.min,
-        salary_max: job.salary?.max,
+        external_id: job.externalId || job.id,
+        platform: job.platform || platform || "indeed",
+        title: job.title || "Untitled Position",
+        company_name: job.company || "Unknown Company",
+        company_logo_url: job.companyLogo || null,
+        location: job.location || null,
+        is_remote: job.isRemote || false,
+        job_type: jobType || null,
+        salary_min: job.salary?.min || null,
+        salary_max: job.salary?.max || null,
         salary_currency: job.salary?.currency || "USD",
-        description: job.description,
+        description: job.description || null,
         requirements: job.requirements || [],
         skills: job.skills || [],
-        apply_url: job.applyUrl,
+        apply_url: job.applyUrl || null,
         posted_at: postedAt,
         raw_data: job,
       };
     });
 
+    let savedJobs: { id: string }[] = [];
     if (jobsToInsert.length > 0) {
-      const { error: insertError } = await supabase.from("jobs").upsert(jobsToInsert, {
-        onConflict: "platform,external_id",
-        ignoreDuplicates: false,
-      });
+      const { data: insertedData, error: insertError } = await supabase
+        .from("jobs")
+        .upsert(jobsToInsert, {
+          onConflict: "platform,external_id",
+          ignoreDuplicates: false,
+        })
+        .select("id, external_id");
 
       if (insertError) {
         console.error("Error inserting jobs:", insertError);
+      } else if (insertedData) {
+        savedJobs = insertedData;
       }
     }
 
+    // Fetch the saved jobs with their database IDs
+    const { data: dbJobs } = await supabase
+      .from("jobs")
+      .select("*")
+      .in("external_id", jobs.map((j: ScrapedJob) => j.externalId || j.id))
+      .order("created_at", { ascending: false });
+
     return NextResponse.json({
       success: true,
-      jobs,
+      jobs: dbJobs || jobs,
+      savedCount: savedJobs.length,
       count: jobs.length,
     });
   } catch (error) {

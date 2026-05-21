@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { jobIds, singleJobId } = body as { jobIds?: string[]; singleJobId?: string };
+    const { jobIds, singleJobId, resumeId } = body as { jobIds?: string[]; singleJobId?: string; resumeId?: string };
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -28,12 +28,19 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
-    const { data: resumes } = await supabase
+    // Get the specified resume or the primary/latest one
+    let resumeQuery = supabase
       .from("resumes")
       .select("*")
-      .eq("user_id", user.id)
-      .eq("is_primary", true)
-      .single();
+      .eq("user_id", user.id);
+
+    if (resumeId) {
+      resumeQuery = resumeQuery.eq("id", resumeId);
+    } else {
+      resumeQuery = resumeQuery.eq("is_primary", true);
+    }
+
+    const { data: resumes } = await resumeQuery.single();
 
     if (!profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
@@ -100,6 +107,35 @@ export async function POST(request: Request) {
       results = [result];
     } else {
       results = await batchAnalyzeJobs(userProfile, jobListings);
+    }
+
+    // Save results to database
+    const scoresToInsert = results.map((result) => ({
+      user_id: user.id,
+      job_id: result.jobId,
+      overall_score: result.overallScore,
+      interview_probability: result.interviewProbability,
+      selection_probability: result.selectionProbability,
+      skills_match: result.skillsMatch,
+      experience_match: result.experienceMatch,
+      location_match: result.locationMatch,
+      salary_match: result.salaryMatch,
+      strengths: result.strengths,
+      improvements: result.improvements,
+      application_tips: result.applicationTips,
+      recruiter_perspective: result.recruiterPerspective,
+    }));
+
+    if (scoresToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from("job_match_scores")
+        .upsert(scoresToInsert, {
+          onConflict: "user_id,job_id",
+        });
+
+      if (insertError) {
+        console.error("Error saving match scores:", insertError);
+      }
     }
 
     return NextResponse.json({

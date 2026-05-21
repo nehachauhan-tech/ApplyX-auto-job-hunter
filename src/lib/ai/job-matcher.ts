@@ -227,7 +227,7 @@ Provide realistic probabilities based on typical hiring standards:
 Be constructive but honest. If the match is weak, say so and explain why.`;
 
   const response = await ai.models.generateContent({
-    model: aiModels.recommendedModels.reasoning,
+    model: aiModels.recommendedModels.agents,
     contents: prompt,
     config: {
       responseMimeType: "application/json",

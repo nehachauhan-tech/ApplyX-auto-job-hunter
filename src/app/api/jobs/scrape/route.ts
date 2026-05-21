@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { scrapeJobs, JobSearchParams, ScrapedJob } from "@/lib/apify/client";
 import { NextResponse } from "next/server";
 
@@ -84,7 +84,8 @@ export async function POST(request: Request) {
 
     let savedJobs: { id: string }[] = [];
     if (jobsToInsert.length > 0) {
-      const { data: insertedData, error: insertError } = await supabase
+      const serviceClient = createServiceClient();
+      const { data: insertedData, error: insertError } = await serviceClient
         .from("jobs")
         .upsert(jobsToInsert, {
           onConflict: "platform,external_id",
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Fetch the saved jobs with their database IDs
+    // Fetch the saved jobs with their database IDs (using regular client for RLS compliance)
     const { data: dbJobs } = await supabase
       .from("jobs")
       .select("*")

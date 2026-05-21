@@ -124,17 +124,32 @@ export default function JobsPage() {
 
   const loadResumes = useCallback(async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    const { data: resumesData } = await supabase
+    if (userError || !user) {
+      console.log("No user session for loading resumes");
+      return;
+    }
+
+    const { data: resumesData, error: resumeError } = await supabase
       .from("resumes")
-      .select("id, file_name, skills, is_primary, created_at")
+      .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
+    if (resumeError) {
+      console.error("Error loading resumes:", resumeError);
+      return;
+    }
+
     if (resumesData && resumesData.length > 0) {
-      setResumes(resumesData);
+      setResumes(resumesData.map(r => ({
+        id: r.id,
+        file_name: r.name || "Resume",
+        skills: r.skills || [],
+        is_primary: r.is_primary || false,
+        created_at: r.created_at,
+      })));
       // Auto-select the most recent or primary resume
       const primaryResume = resumesData.find(r => r.is_primary) || resumesData[0];
       setSelectedResumeId(primaryResume.id);

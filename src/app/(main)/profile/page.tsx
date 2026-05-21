@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -17,6 +17,12 @@ import {
   DollarSign,
   Building2,
   Check,
+  Upload,
+  FileText,
+  Loader2,
+  X,
+  CheckCircle,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -44,6 +50,26 @@ interface UserPreferences {
   max_salary: number | null;
   salary_currency: string;
   industries: string[];
+}
+
+interface ParsedResumeData {
+  personal_info?: {
+    full_name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedin_url?: string;
+    github_url?: string;
+    portfolio_url?: string;
+  };
+  professional_summary?: string;
+  headline?: string;
+  skills?: string[];
+  experience?: Array<{
+    company: string;
+    title: string;
+  }>;
+  experience_level?: string;
 }
 
 const experienceLevels = [
@@ -87,11 +113,18 @@ const currencyOptions = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<"personal" | "preferences">("personal");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [parseProgress, setParseProgress] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [pendingResumeData, setPendingResumeData] = useState<ParsedResumeData | null>(null);
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>({
@@ -185,6 +218,122 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      setError("Please upload a PDF file");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File size must be less than 10MB");
+      return;
+    }
+
+    setResumeFile(file);
+    setError(null);
+    await parseResume(file);
+  };
+
+  const parseResume = async (file: File) => {
+    setIsParsingResume(true);
+    setParseProgress("Uploading resume...");
+    setError(null);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      setParseProgress("Analyzing resume with AI...");
+
+      const response = await fetch("/api/resume/parse", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to parse resume");
+      }
+
+      const result = await response.json();
+      const parsedData: ParsedResumeData = result.data;
+
+      setParseProgress("Resume parsed successfully!");
+      setPendingResumeData(parsedData);
+      setShowUpdateConfirm(true);
+
+      setTimeout(() => {
+        setParseProgress("");
+      }, 2000);
+    } catch (err) {
+      console.error("Resume parse error:", err);
+      setError(err instanceof Error ? err.message : "Failed to parse resume");
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
+
+  const applyResumeData = () => {
+    if (!pendingResumeData || !profile) return;
+
+    const data = pendingResumeData;
+
+    if (data.personal_info) {
+      setProfile((prev) => prev ? {
+        ...prev,
+        full_name: data.personal_info?.full_name || prev.full_name,
+        phone: data.personal_info?.phone || prev.phone,
+        location: data.personal_info?.location || prev.location,
+        linkedin_url: data.personal_info?.linkedin_url || prev.linkedin_url,
+        github_url: data.personal_info?.github_url || prev.github_url,
+        portfolio_url: data.personal_info?.portfolio_url || prev.portfolio_url,
+      } : prev);
+    }
+
+    if (data.headline) {
+      setProfile((prev) => prev ? { ...prev, headline: data.headline || prev.headline } : prev);
+    }
+
+    if (data.professional_summary) {
+      setProfile((prev) => prev ? { ...prev, bio: data.professional_summary || prev.bio } : prev);
+    }
+
+    if (data.experience_level) {
+      setPreferences((prev) => ({
+        ...prev,
+        experience_level: data.experience_level || prev.experience_level,
+      }));
+    }
+
+    if (data.experience && data.experience.length > 0) {
+      const roles = data.experience.map((exp) => exp.title).filter(Boolean);
+      const uniqueRoles = Array.from(new Set(roles)).slice(0, 5);
+      if (uniqueRoles.length > 0) {
+        setPreferences((prev) => ({
+          ...prev,
+          desired_roles: uniqueRoles,
+        }));
+      }
+    }
+
+    setShowUpdateConfirm(false);
+    setPendingResumeData(null);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+  };
+
+  const cancelResumeUpdate = () => {
+    setShowUpdateConfirm(false);
+    setPendingResumeData(null);
+    setResumeFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async () => {
     if (!profile) return;
 
@@ -248,6 +397,41 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Update Confirmation Modal */}
+      {showUpdateConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-dark-700">Update Profile from Resume?</h3>
+                <p className="text-sm text-dark-400">We found information in your resume</p>
+              </div>
+            </div>
+            <p className="text-dark-500 text-sm mb-6">
+              Would you like to update your profile with the information extracted from your resume?
+              This will overwrite your current profile details.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelResumeUpdate}
+                className="flex-1 btn-secondary py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyResumeData}
+                className="flex-1 btn-primary py-2"
+              >
+                Update Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -279,6 +463,51 @@ export default function ProfilePage() {
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>
       )}
+
+      {/* Resume Upload Card */}
+      <div className="bg-gradient-to-r from-primary-50 to-olive-50 rounded-xl border-2 border-dashed border-primary-200 p-6">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          onChange={handleFileSelect}
+          className="hidden"
+          id="resume-upload-profile"
+        />
+
+        {!resumeFile || !isParsingResume ? (
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+              <Upload className="w-7 h-7 text-primary-600" />
+            </div>
+            <div className="text-center sm:text-left flex-1">
+              <h3 className="font-semibold text-dark-700 mb-1">Update Profile from Resume</h3>
+              <p className="text-dark-400 text-sm">
+                Upload your resume and our AI will extract your information to update your profile automatically.
+              </p>
+            </div>
+            <label
+              htmlFor="resume-upload-profile"
+              className="btn-primary cursor-pointer flex items-center gap-2 whitespace-nowrap"
+            >
+              <FileText className="w-5 h-5" />
+              Upload Resume
+            </label>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary-100">
+                <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+              </div>
+              <div>
+                <p className="font-medium text-dark-700">{resumeFile.name}</p>
+                <p className="text-sm text-dark-400">{parseProgress}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Profile Card */}
       <div className="bg-white rounded-2xl border border-primary-100 overflow-hidden">

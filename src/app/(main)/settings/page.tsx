@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Bell,
   Shield,
@@ -9,6 +9,11 @@ import {
   LogOut,
   ChevronRight,
   Check,
+  Key,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -27,8 +32,63 @@ export default function SettingsPage() {
     daily_limit: 50,
     skip_cover_letter: false,
   });
+  const [apiKeys, setApiKeys] = useState({
+    apify: "",
+  });
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isSavingApiKey, setIsSavingApiKey] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const loadApiKeys = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: preferences } = await supabase
+      .from("user_preferences")
+      .select("apify_api_key")
+      .eq("user_id", user.id)
+      .single();
+
+    if (preferences?.apify_api_key) {
+      setApiKeys({ apify: preferences.apify_api_key });
+    }
+  }, []);
+
+  useEffect(() => {
+    loadApiKeys();
+  }, [loadApiKeys]);
+
+  const handleSaveApiKey = async () => {
+    setIsSavingApiKey(true);
+    setApiKeySaved(false);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("user_preferences")
+        .upsert({
+          user_id: user.id,
+          apify_api_key: apiKeys.apify || null,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: "user_id",
+        });
+
+      if (error) throw error;
+      setApiKeySaved(true);
+      setTimeout(() => setApiKeySaved(false), 3000);
+    } catch (error) {
+      console.error("Failed to save API key:", error);
+    } finally {
+      setIsSavingApiKey(false);
+    }
+  };
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -146,6 +206,74 @@ export default function SettingsPage() {
                 className="w-5 h-5 rounded text-primary-600 focus:ring-primary-500"
               />
             </label>
+          </div>
+        </div>
+      </div>
+
+      {/* API Keys */}
+      <div className="bg-white rounded-xl border border-primary-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-primary-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-olive-100 rounded-lg flex items-center justify-center">
+              <Key className="w-5 h-5 text-olive-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-dark-700">API Keys</h2>
+              <p className="text-sm text-dark-400">Connect external services for enhanced features</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-medium text-dark-700">Apify API Key</label>
+              <a
+                href="https://console.apify.com/account/integrations"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+              >
+                Get API Key
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+            <p className="text-sm text-dark-400 mb-3">
+              Required for job scraping from LinkedIn and Indeed. Your key is stored securely.
+            </p>
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <input
+                  type={showApiKey ? "text" : "password"}
+                  value={apiKeys.apify}
+                  onChange={(e) => setApiKeys({ ...apiKeys, apify: e.target.value })}
+                  placeholder="apify_api_..."
+                  className="input-field w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"
+                >
+                  {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <button
+                onClick={handleSaveApiKey}
+                disabled={isSavingApiKey}
+                className="btn-primary px-6 flex items-center gap-2"
+              >
+                {isSavingApiKey ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : apiKeySaved ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Saved
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

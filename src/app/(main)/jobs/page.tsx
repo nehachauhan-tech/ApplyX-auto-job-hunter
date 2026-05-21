@@ -61,6 +61,13 @@ interface ScrapedJob {
   applyUrl: string;
 }
 
+interface ProgressState {
+  isActive: boolean;
+  stage: string;
+  progress: number;
+  message: string;
+}
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [matchScores, setMatchScores] = useState<Record<string, JobMatchScore>>({});
@@ -72,12 +79,25 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [hasApifyKey, setHasApifyKey] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchProgress, setSearchProgress] = useState<ProgressState>({
+    isActive: false,
+    stage: "",
+    progress: 0,
+    message: "",
+  });
+  const [analysisProgress, setAnalysisProgress] = useState<ProgressState>({
+    isActive: false,
+    stage: "",
+    progress: 0,
+    message: "",
+  });
   const [filters, setFilters] = useState({
     remote: false,
     jobType: "" as string,
     platform: "linkedin" as "linkedin" | "indeed",
     minScore: 0,
   });
+  const [maxResults, setMaxResults] = useState(10);
 
   const loadJobs = useCallback(async () => {
     const supabase = createClient();
@@ -137,6 +157,34 @@ export default function JobsPage() {
     setIsSearching(true);
     setError(null);
 
+    // Start progress animation
+    setSearchProgress({
+      isActive: true,
+      stage: "connecting",
+      progress: 5,
+      message: "Connecting to job search service...",
+    });
+
+    // Simulate progress stages
+    const progressStages = [
+      { progress: 15, stage: "initializing", message: "Initializing job scraper..." },
+      { progress: 30, stage: "searching", message: `Searching for "${searchQuery}" jobs...` },
+      { progress: 50, stage: "scraping", message: "Scraping job listings from Indeed..." },
+      { progress: 70, stage: "extracting", message: "Extracting job details..." },
+      { progress: 85, stage: "processing", message: "Processing job data..." },
+    ];
+
+    let progressIndex = 0;
+    const progressInterval = setInterval(() => {
+      if (progressIndex < progressStages.length) {
+        setSearchProgress({
+          isActive: true,
+          ...progressStages[progressIndex],
+        });
+        progressIndex++;
+      }
+    }, 8000);
+
     try {
       const response = await fetch("/api/jobs/scrape", {
         method: "POST",
@@ -147,15 +195,24 @@ export default function JobsPage() {
           remote: filters.remote || undefined,
           jobType: filters.jobType || undefined,
           platform: filters.platform,
-          maxResults: 25,
+          maxResults: maxResults,
         }),
       });
+
+      clearInterval(progressInterval);
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to search jobs");
       }
+
+      setSearchProgress({
+        isActive: true,
+        stage: "saving",
+        progress: 95,
+        message: `Found ${data.jobs?.length || 0} jobs! Saving to database...`,
+      });
 
       if (data.jobs && data.jobs.length > 0) {
         const newJobs: Job[] = data.jobs.map((job: ScrapedJob) => ({
@@ -182,7 +239,22 @@ export default function JobsPage() {
       }
 
       await loadJobs();
+
+      setSearchProgress({
+        isActive: true,
+        stage: "complete",
+        progress: 100,
+        message: `Successfully loaded ${data.jobs?.length || 0} jobs!`,
+      });
+
+      // Hide progress after 2 seconds
+      setTimeout(() => {
+        setSearchProgress({ isActive: false, stage: "", progress: 0, message: "" });
+      }, 2000);
+
     } catch (err) {
+      clearInterval(progressInterval);
+      setSearchProgress({ isActive: false, stage: "", progress: 0, message: "" });
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setIsSearching(false);
@@ -193,6 +265,26 @@ export default function JobsPage() {
     if (jobIds.length === 0) return;
 
     setIsAnalyzing(true);
+    setAnalysisProgress({
+      isActive: true,
+      stage: "starting",
+      progress: 5,
+      message: "Starting AI analysis...",
+    });
+
+    // Simulate progress for batch analysis
+    const totalJobs = jobIds.length;
+    let analyzedCount = 0;
+
+    const progressInterval = setInterval(() => {
+      const estimatedProgress = Math.min(90, 10 + (analyzedCount / totalJobs) * 80);
+      setAnalysisProgress({
+        isActive: true,
+        stage: "analyzing",
+        progress: estimatedProgress,
+        message: `Analyzing job ${analyzedCount + 1} of ${totalJobs}... AI is evaluating your match`,
+      });
+    }, 3000);
 
     try {
       const response = await fetch("/api/jobs/match", {
@@ -200,6 +292,8 @@ export default function JobsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobIds }),
       });
+
+      clearInterval(progressInterval);
 
       const data = await response.json();
 
@@ -214,10 +308,25 @@ export default function JobsPage() {
             strengths: match.strengths,
             improvements: match.improvements,
           };
+          analyzedCount++;
         });
         setMatchScores(newScores);
       }
+
+      setAnalysisProgress({
+        isActive: true,
+        stage: "complete",
+        progress: 100,
+        message: `Analysis complete! Evaluated ${data.matches?.length || 0} jobs`,
+      });
+
+      setTimeout(() => {
+        setAnalysisProgress({ isActive: false, stage: "", progress: 0, message: "" });
+      }, 2000);
+
     } catch (err) {
+      clearInterval(progressInterval);
+      setAnalysisProgress({ isActive: false, stage: "", progress: 0, message: "" });
       console.error("Analysis failed:", err);
     } finally {
       setIsAnalyzing(false);
@@ -226,6 +335,22 @@ export default function JobsPage() {
 
   const analyzeSingleJob = async (jobId: string) => {
     setIsAnalyzing(true);
+    setAnalysisProgress({
+      isActive: true,
+      stage: "analyzing",
+      progress: 30,
+      message: "AI is analyzing your profile match...",
+    });
+
+    const progressInterval = setInterval(() => {
+      setAnalysisProgress((prev) => ({
+        ...prev,
+        progress: Math.min(prev.progress + 15, 85),
+        message: prev.progress > 50
+          ? "Calculating interview probability..."
+          : "Comparing skills and experience...",
+      }));
+    }, 2000);
 
     try {
       const response = await fetch("/api/jobs/match", {
@@ -233,6 +358,8 @@ export default function JobsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ singleJobId: jobId }),
       });
+
+      clearInterval(progressInterval);
 
       const data = await response.json();
 
@@ -249,8 +376,22 @@ export default function JobsPage() {
             improvements: match.improvements,
           },
         }));
+
+        setAnalysisProgress({
+          isActive: true,
+          stage: "complete",
+          progress: 100,
+          message: `Match score: ${match.overallScore}%`,
+        });
       }
+
+      setTimeout(() => {
+        setAnalysisProgress({ isActive: false, stage: "", progress: 0, message: "" });
+      }, 1500);
+
     } catch (err) {
+      clearInterval(progressInterval);
+      setAnalysisProgress({ isActive: false, stage: "", progress: 0, message: "" });
       console.error("Analysis failed:", err);
     } finally {
       setIsAnalyzing(false);
@@ -364,7 +505,7 @@ export default function JobsPage() {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-primary-100 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-4 pt-4 border-t border-primary-100 grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-dark-600 mb-1.5">Platform</label>
               <select
@@ -374,6 +515,20 @@ export default function JobsPage() {
               >
                 <option value="linkedin">LinkedIn</option>
                 <option value="indeed">Indeed</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-600 mb-1.5">Results</label>
+              <select
+                value={maxResults}
+                onChange={(e) => setMaxResults(parseInt(e.target.value))}
+                className="input-field w-full"
+              >
+                <option value="5">5 jobs</option>
+                <option value="10">10 jobs</option>
+                <option value="15">15 jobs</option>
+                <option value="25">25 jobs</option>
+                <option value="50">50 jobs</option>
               </select>
             </div>
             <div>
@@ -415,6 +570,65 @@ export default function JobsPage() {
           </div>
         )}
       </div>
+
+      {/* Progress Bars */}
+      {searchProgress.isActive && (
+        <div className="bg-white rounded-xl border border-primary-100 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <Search className="w-5 h-5 text-primary-600 animate-pulse" />
+              </div>
+              <div>
+                <p className="font-medium text-dark-700">Job Search in Progress</p>
+                <p className="text-sm text-dark-400">{searchProgress.message}</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-primary-600">{searchProgress.progress}%</span>
+          </div>
+          <div className="w-full bg-cream-100 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${searchProgress.progress}%` }}
+            />
+          </div>
+          {searchProgress.stage !== "complete" && (
+            <div className="flex items-center gap-2 text-xs text-dark-400">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>This may take 30-60 seconds depending on the number of jobs</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {analysisProgress.isActive && (
+        <div className="bg-white rounded-xl border border-olive-200 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-olive-100 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-olive-600 animate-pulse" />
+              </div>
+              <div>
+                <p className="font-medium text-dark-700">AI Analysis in Progress</p>
+                <p className="text-sm text-dark-400">{analysisProgress.message}</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-olive-600">{analysisProgress.progress}%</span>
+          </div>
+          <div className="w-full bg-olive-50 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-olive-500 to-olive-600 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${analysisProgress.progress}%` }}
+            />
+          </div>
+          {analysisProgress.stage !== "complete" && (
+            <div className="flex items-center gap-2 text-xs text-dark-400">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>AI is analyzing your profile against job requirements...</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

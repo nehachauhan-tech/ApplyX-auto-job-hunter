@@ -46,25 +46,35 @@ export async function POST(request: Request) {
       userApiKey
     );
 
-    const jobsToInsert = jobs.map((job: ScrapedJob) => ({
-      external_id: job.externalId,
-      platform: job.platform,
-      title: job.title,
-      company_name: job.company,
-      company_logo_url: job.companyLogo,
-      location: job.location,
-      is_remote: job.isRemote,
-      job_type: job.jobType,
-      salary_min: job.salary?.min,
-      salary_max: job.salary?.max,
-      salary_currency: job.salary?.currency || "USD",
-      description: job.description,
-      requirements: job.requirements || [],
-      skills: job.skills || [],
-      apply_url: job.applyUrl,
-      posted_at: job.postedAt ? new Date(job.postedAt).toISOString() : null,
-      raw_data: job,
-    }));
+    const jobsToInsert = jobs.map((job: ScrapedJob) => {
+      let postedAt = null;
+      if (job.postedAt) {
+        const parsedDate = new Date(job.postedAt);
+        if (!isNaN(parsedDate.getTime())) {
+          postedAt = parsedDate.toISOString();
+        }
+      }
+
+      return {
+        external_id: job.externalId,
+        platform: job.platform,
+        title: job.title,
+        company_name: job.company,
+        company_logo_url: job.companyLogo,
+        location: job.location,
+        is_remote: job.isRemote,
+        job_type: job.jobType,
+        salary_min: job.salary?.min,
+        salary_max: job.salary?.max,
+        salary_currency: job.salary?.currency || "USD",
+        description: job.description,
+        requirements: job.requirements || [],
+        skills: job.skills || [],
+        apply_url: job.applyUrl,
+        posted_at: postedAt,
+        raw_data: job,
+      };
+    });
 
     if (jobsToInsert.length > 0) {
       const { error: insertError } = await supabase.from("jobs").upsert(jobsToInsert, {

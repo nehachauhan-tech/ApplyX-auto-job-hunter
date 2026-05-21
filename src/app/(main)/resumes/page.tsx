@@ -53,6 +53,7 @@ interface Resume {
       email?: string;
       phone?: string;
       location?: string;
+      linkedin_url?: string;
     };
     professional_summary?: string;
     headline?: string;

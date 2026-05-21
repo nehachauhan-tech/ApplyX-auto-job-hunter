@@ -18,7 +18,7 @@ export function getModelId(useCase: RecommendedUseCase): string {
 
 export function getModelInfo(modelId: string) {
   for (const category of Object.values(aiModels.models)) {
-    for (const [key, model] of Object.entries(category)) {
+    for (const [, model] of Object.entries(category)) {
       if ((model as { modelId: string }).modelId === modelId) {
         return model;
       }

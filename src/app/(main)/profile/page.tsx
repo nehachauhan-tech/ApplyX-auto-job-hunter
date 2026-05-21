@@ -20,8 +20,6 @@ import {
   Upload,
   FileText,
   Loader2,
-  X,
-  CheckCircle,
   Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";

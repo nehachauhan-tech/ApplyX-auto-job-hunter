@@ -21,8 +21,8 @@ export default function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary-300/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-blue/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-100/50 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-olive-200/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sand-200/50 rounded-full blur-3xl" />
       </div>
 
       {floatingIcons.map(({ Icon, delay, x, y }, index) => (
@@ -37,7 +37,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 4, repeat: Infinity, delay: delay }}
-            className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-primary-100"
+            className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-sand-200"
           >
             <Icon className="w-6 h-6 text-primary-600" />
           </motion.div>
@@ -50,9 +50,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-primary-200 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-sand-300 mb-6"
           >
-            <span className="w-2 h-2 bg-accent-blue rounded-full animate-pulse" />
+            <span className="w-2 h-2 bg-olive-500 rounded-full animate-pulse" />
             <span className="text-sm font-medium text-dark-300">
               AI-Powered Job Hunting Platform
             </span>
@@ -78,7 +78,7 @@ export default function Hero() {
               >
                 <motion.path
                   d="M2 10C50 2 100 2 150 6C200 10 250 6 298 2"
-                  stroke="#C9A227"
+                  stroke="#C08552"
                   strokeWidth="4"
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
@@ -144,12 +144,12 @@ export default function Hero() {
         >
           <div className="relative max-w-5xl mx-auto">
             <div className="absolute inset-0 bg-gradient-to-t from-cream-100 via-transparent to-transparent z-10 pointer-events-none" />
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl border border-primary-100 overflow-hidden">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl border border-sand-200 overflow-hidden">
               <div className="bg-dark-700 px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-accent-red" />
-                  <div className="w-3 h-3 rounded-full bg-primary-400" />
-                  <div className="w-3 h-3 rounded-full bg-accent-green" />
+                  <div className="w-3 h-3 rounded-full bg-accent-coral" />
+                  <div className="w-3 h-3 rounded-full bg-accent-peach" />
+                  <div className="w-3 h-3 rounded-full bg-accent-sage" />
                 </div>
                 <div className="flex-1 text-center">
                   <span className="text-sm text-cream-200">
@@ -179,7 +179,7 @@ export default function Hero() {
                   />
                 </div>
                 <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="bg-cream-100 rounded-xl p-4 sm:p-6">
+                  <div className="bg-sand-100 rounded-xl p-4 sm:p-6">
                     <h3 className="font-semibold text-dark-700 mb-4">
                       Recent Applications
                     </h3>
@@ -203,7 +203,7 @@ export default function Hero() {
                       ].map((job, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between bg-white/80 rounded-lg p-3 border border-primary-100"
+                          className="flex items-center justify-between bg-white/80 rounded-lg p-3 border border-sand-200"
                         >
                           <div>
                             <div className="font-medium text-dark-700 text-sm">
@@ -216,10 +216,10 @@ export default function Hero() {
                           <span
                             className={`text-xs px-2 py-1 rounded-full ${
                               job.status === "Interview"
-                                ? "bg-accent-green/20 text-accent-green"
+                                ? "bg-olive-200 text-olive-500"
                                 : job.status === "In Review"
                                 ? "bg-primary-100 text-primary-600"
-                                : "bg-accent-blue/10 text-accent-blue"
+                                : "bg-sand-200 text-primary-500"
                             }`}
                           >
                             {job.status}
@@ -228,7 +228,7 @@ export default function Hero() {
                       ))}
                     </div>
                   </div>
-                  <div className="bg-cream-100 rounded-xl p-4 sm:p-6">
+                  <div className="bg-sand-100 rounded-xl p-4 sm:p-6">
                     <h3 className="font-semibold text-dark-700 mb-4">
                       AI Resume Score
                     </h3>
@@ -243,7 +243,7 @@ export default function Hero() {
                             cy="50"
                             r="40"
                             fill="none"
-                            stroke="#FFF0BF"
+                            stroke="#F3DCC8"
                             strokeWidth="12"
                           />
                           <circle
@@ -251,7 +251,7 @@ export default function Hero() {
                             cy="50"
                             r="40"
                             fill="none"
-                            stroke="#C9A227"
+                            stroke="#C08552"
                             strokeWidth="12"
                             strokeDasharray="251.2"
                             strokeDashoffset="37.68"
@@ -291,9 +291,9 @@ function DashboardCard({
   color: "blue" | "orange" | "green";
 }) {
   const colorClasses = {
-    blue: "bg-accent-blue/10 border-accent-blue/20",
+    blue: "bg-sand-100 border-sand-300",
     orange: "bg-primary-100 border-primary-200",
-    green: "bg-accent-green/10 border-accent-green/20",
+    green: "bg-olive-100 border-olive-200",
   };
 
   return (
@@ -305,7 +305,7 @@ function DashboardCard({
         <span className="text-2xl sm:text-3xl font-bold text-dark-700">
           {value}
         </span>
-        <span className="text-sm text-accent-green font-medium">{change}</span>
+        <span className="text-sm text-olive-500 font-medium">{change}</span>
       </div>
     </div>
   );

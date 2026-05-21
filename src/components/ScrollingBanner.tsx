@@ -22,7 +22,7 @@ const companies = [
 
 export default function ScrollingBanner() {
   return (
-    <section className="py-12 bg-cream-200 overflow-hidden">
+    <section className="py-12 bg-sand-100 overflow-hidden">
       <div className="text-center mb-8">
         <p className="text-sm font-medium text-dark-200 uppercase tracking-wider">
           Our users have landed jobs at
@@ -30,8 +30,8 @@ export default function ScrollingBanner() {
       </div>
 
       <div className="relative">
-        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-cream-200 to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-cream-200 to-transparent z-10" />
+        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-sand-100 to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-sand-100 to-transparent z-10" />
 
         <motion.div
           animate={{ x: ["0%", "-50%"] }}

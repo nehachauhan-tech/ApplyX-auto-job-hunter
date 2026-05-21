@@ -62,7 +62,7 @@ export default function HowItWorks() {
         </motion.div>
 
         <div className="relative">
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-primary-200 -translate-y-1/2" />
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-sand-300 -translate-y-1/2" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
             {steps.map((step, index) => (
@@ -73,7 +73,7 @@ export default function HowItWorks() {
                 transition={{ duration: 0.5, delay: index * 0.15 }}
                 className="relative"
               >
-                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-primary-100 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div className="bg-white rounded-2xl p-6 lg:p-8 border border-sand-200 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
                   <div className="relative z-10 flex flex-col items-center text-center">
                     <div className="w-16 h-16 bg-dark-700 rounded-2xl flex items-center justify-center mb-6 relative">
                       <step.icon className="w-8 h-8 text-cream-100" />

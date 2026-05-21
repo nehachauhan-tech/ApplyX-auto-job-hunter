@@ -51,7 +51,7 @@ export default function FAQ() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-primary-200 mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-sand-300 mb-4">
             <HelpCircle className="w-4 h-4 text-primary-500" />
             <span className="text-sm font-medium text-dark-300">FAQs</span>
           </div>
@@ -77,7 +77,7 @@ export default function FAQ() {
                 onClick={() =>
                   setOpenIndex(openIndex === index ? null : index)
                 }
-                className="w-full bg-white rounded-xl p-5 border border-primary-100 hover:border-primary-200 transition-all duration-200 text-left"
+                className="w-full bg-white rounded-xl p-5 border border-sand-200 hover:border-sand-300 transition-all duration-200 text-left"
               >
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="font-semibold text-dark-700">

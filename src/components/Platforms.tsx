@@ -62,7 +62,7 @@ export default function Platforms() {
   return (
     <section
       id="platforms"
-      className="section-padding bg-gradient-to-b from-cream-100 to-cream-200"
+      className="section-padding bg-gradient-to-b from-sand-100 to-cream-200"
       ref={ref}
     >
       <div className="container-max mx-auto">
@@ -91,7 +91,7 @@ export default function Platforms() {
               transition={{ duration: 0.4, delay: index * 0.05 }}
               className="group"
             >
-              <div className="bg-white rounded-xl p-5 border border-primary-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+              <div className="bg-white rounded-xl p-5 border border-sand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
                 <div className="flex items-start justify-between mb-3">
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
@@ -119,7 +119,7 @@ export default function Platforms() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-primary-100"
+          className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-sand-200"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
@@ -147,29 +147,29 @@ export default function Platforms() {
               </ul>
             </div>
             <div className="relative">
-              <div className="bg-cream-100 rounded-xl p-6">
+              <div className="bg-sand-100 rounded-xl p-6">
                 <div className="space-y-3">
                   {["LinkedIn", "Indeed", "Naukri"].map((name, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between bg-white rounded-lg p-4 border border-primary-100"
+                      className="flex items-center justify-between bg-white rounded-lg p-4 border border-sand-200"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-primary-600" />
+                        <div className="w-8 h-8 rounded-lg bg-olive-100 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-olive-500" />
                         </div>
                         <span className="font-medium text-dark-700">
                           {name}
                         </span>
                       </div>
-                      <span className="text-sm text-accent-green font-medium">
+                      <span className="text-sm text-olive-500 font-medium">
                         Connected
                       </span>
                     </div>
                   ))}
-                  <div className="flex items-center justify-between bg-white/50 rounded-lg p-4 border border-dashed border-primary-200">
+                  <div className="flex items-center justify-between bg-white/50 rounded-lg p-4 border border-dashed border-sand-300">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-sand-100 flex items-center justify-center">
                         <span className="text-dark-200 text-lg">+</span>
                       </div>
                       <span className="text-dark-200">

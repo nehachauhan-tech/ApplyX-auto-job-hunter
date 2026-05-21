@@ -19,8 +19,8 @@ const features = [
     title: "ATS-Optimized Resumes",
     description:
       "AI analyzes job descriptions and tailors your resume with the right keywords to pass ATS filters.",
-    color: "bg-accent-blue/10",
-    iconColor: "text-accent-blue",
+    color: "bg-sand-100",
+    iconColor: "text-primary-500",
   },
   {
     icon: Send,
@@ -35,16 +35,16 @@ const features = [
     title: "Smart Dashboard",
     description:
       "Track all applications, responses, and interview invites in one beautiful, unified dashboard.",
-    color: "bg-accent-green/10",
-    iconColor: "text-accent-green",
+    color: "bg-olive-100",
+    iconColor: "text-olive-500",
   },
   {
     icon: Mail,
     title: "Recruiter Outreach",
     description:
       "Find recruiter emails and send personalized outreach messages to get noticed faster.",
-    color: "bg-accent-blue/10",
-    iconColor: "text-accent-blue",
+    color: "bg-sand-100",
+    iconColor: "text-primary-500",
   },
   {
     icon: Bell,
@@ -59,8 +59,8 @@ const features = [
     title: "Multi-Platform Sync",
     description:
       "Connect LinkedIn, Indeed, Naukri, Unstop, Internshala, and more in one unified workflow.",
-    color: "bg-accent-green/10",
-    iconColor: "text-accent-green",
+    color: "bg-olive-100",
+    iconColor: "text-olive-500",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="section-padding bg-gradient-to-b from-cream-100 to-cream-200"
+      className="section-padding bg-gradient-to-b from-cream-100 to-sand-100"
       ref={ref}
     >
       <div className="container-max mx-auto">
@@ -81,7 +81,7 @@ export default function Features() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-primary-200 mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-sand-300 mb-4">
             <Sparkles className="w-4 h-4 text-primary-500" />
             <span className="text-sm font-medium text-dark-300">
               Powerful Features
@@ -107,7 +107,7 @@ export default function Features() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group"
             >
-              <div className="h-full bg-white/70 backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-primary-100 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/5 hover:-translate-y-1">
+              <div className="h-full bg-white/70 backdrop-blur-sm rounded-2xl p-6 lg:p-8 border border-sand-200 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/5 hover:-translate-y-1">
                 <div
                   className={`w-14 h-14 ${feature.color} rounded-xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110`}
                 >
@@ -132,7 +132,7 @@ export default function Features() {
         >
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-blue rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-olive-400 rounded-full blur-3xl" />
           </div>
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="text-center lg:text-left">

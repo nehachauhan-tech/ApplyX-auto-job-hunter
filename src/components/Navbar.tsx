@@ -9,7 +9,7 @@ import Logo from "./Logo";
 const navLinks = [
   { name: "Features", href: "#features" },
   { name: "How It Works", href: "#how-it-works" },
-  { name: "Platforms", href: "#platforms" },
+  { name: "Pricing", href: "#pricing" },
   { name: "FAQ", href: "#faq" },
 ];
 
@@ -32,7 +32,7 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-cream-100/90 backdrop-blur-xl shadow-sm"
+          ? "bg-cream-50/90 backdrop-blur-xl shadow-sm"
           : "bg-transparent"
       }`}
     >
@@ -85,7 +85,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-cream-100/95 backdrop-blur-xl border-t border-primary-100"
+            className="lg:hidden bg-cream-50/95 backdrop-blur-xl border-t border-sand-200"
           >
             <div className="container-max mx-auto px-4 py-6 space-y-4">
               {navLinks.map((link) => (
@@ -98,7 +98,7 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 space-y-3 border-t border-primary-100">
+              <div className="pt-4 space-y-3 border-t border-sand-200">
                 <Link
                   href="/login"
                   className="block text-center text-dark-300 hover:text-primary-600 py-2 font-medium"

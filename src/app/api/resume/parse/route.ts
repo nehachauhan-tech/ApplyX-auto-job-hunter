@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import aiModels from "@/config/ai-models.json";
 
 const resumeSchema = {
   type: "object",
@@ -204,7 +205,7 @@ export async function POST(request: Request) {
         .eq("id", dbResumeId);
     }
 
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       await supabase
         .from("resumes")
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
     const base64Data = buffer.toString("base64");
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-05-20",
+      model: aiModels.recommendedModels.default,
       contents: [
         {
           inlineData: {

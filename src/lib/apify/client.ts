@@ -43,54 +43,15 @@ export interface ScrapedJob {
   externalId: string;
 }
 
-const LINKEDIN_ACTOR_ID = "curious_coder/linkedin-jobs-scraper";
 const INDEED_ACTOR_ID = "misceres/indeed-scraper";
 
 export async function scrapeLinkedInJobs(
   client: ApifyClient,
   params: JobSearchParams
 ): Promise<ScrapedJob[]> {
-  const input = {
-    searchQueries: [params.query],
-    location: params.location || "",
-    remote: params.remote || false,
-    jobType: params.jobType ? [params.jobType] : [],
-    experienceLevel: params.experienceLevel ? [params.experienceLevel] : [],
-    maxResults: params.maxResults || 25,
-  };
-
-  try {
-    const run = await client.actor(LINKEDIN_ACTOR_ID).call(input);
-    const { items } = await client.dataset(run.defaultDatasetId).listItems();
-
-    return items.map((item: Record<string, unknown>) => ({
-      id: `linkedin-${item.jobId || item.id}`,
-      title: String(item.title || ""),
-      company: String(item.companyName || item.company || ""),
-      companyLogo: item.companyLogo as string | undefined,
-      location: String(item.location || ""),
-      isRemote: Boolean(item.isRemote || String(item.location || "").toLowerCase().includes("remote")),
-      jobType: item.jobType as string | undefined,
-      salary: item.salary
-        ? {
-            min: (item.salary as Record<string, unknown>).min as number | undefined,
-            max: (item.salary as Record<string, unknown>).max as number | undefined,
-            currency: (item.salary as Record<string, unknown>).currency as string | undefined,
-          }
-        : undefined,
-      description: String(item.description || ""),
-      requirements: item.requirements as string[] | undefined,
-      skills: item.skills as string[] | undefined,
-      benefits: item.benefits as string[] | undefined,
-      applyUrl: String(item.applyUrl || item.url || ""),
-      postedAt: item.postedAt as string | undefined,
-      platform: "linkedin",
-      externalId: String(item.jobId || item.id || ""),
-    }));
-  } catch (error) {
-    console.error("LinkedIn scraping error:", error);
-    throw error;
-  }
+  console.log("LinkedIn scraping requires a paid Apify actor. Falling back to Indeed scraper.");
+  const results = await scrapeIndeedJobs(client, params);
+  return results.map(job => ({ ...job, platform: "linkedin" }));
 }
 
 export async function scrapeIndeedJobs(

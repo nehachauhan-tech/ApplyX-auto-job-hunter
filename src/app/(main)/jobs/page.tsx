@@ -902,115 +902,119 @@ export default function JobsPage() {
               </div>
 
               {/* AI Match Analysis */}
-              {matchScores[selectedJob.id] && (
-                <div className="bg-cream-50 rounded-xl p-4 space-y-4">
-                  <h3 className="font-semibold text-dark-700 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-olive-600" />
-                    AI Match Analysis
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className={`text-2xl font-bold ${getScoreColor(matchScores[selectedJob.id].overall_score).split(" ")[0]}`}>
-                        {matchScores[selectedJob.id].overall_score}%
+              {(() => {
+                const selectedScore = matchScores[selectedJob.id];
+                if (!selectedScore) return null;
+                return (
+                  <div className="bg-cream-50 rounded-xl p-4 space-y-4">
+                    <h3 className="font-semibold text-dark-700 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-olive-600" />
+                      AI Match Analysis
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className={`text-2xl font-bold ${getScoreColor(selectedScore.overall_score).split(" ")[0]}`}>
+                          {selectedScore.overall_score}%
+                        </div>
+                        <p className="text-xs text-dark-400">Overall Match</p>
                       </div>
-                      <p className="text-xs text-dark-400">Overall Match</p>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-olive-600">
-                        {matchScores[selectedJob.id].interview_probability}%
+                      <div>
+                        <div className="text-2xl font-bold text-olive-600">
+                          {selectedScore.interview_probability}%
+                        </div>
+                        <p className="text-xs text-dark-400">Interview Chance</p>
                       </div>
-                      <p className="text-xs text-dark-400">Interview Chance</p>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-primary-600">
-                        {matchScores[selectedJob.id].selection_probability}%
+                      <div>
+                        <div className="text-2xl font-bold text-primary-600">
+                          {selectedScore.selection_probability}%
+                        </div>
+                        <p className="text-xs text-dark-400">Selection Chance</p>
                       </div>
-                      <p className="text-xs text-dark-400">Selection Chance</p>
                     </div>
+
+                    {/* Skills Analysis */}
+                    {selectedScore.skills_match && (
+                      <div className="pt-4 border-t border-cream-200 space-y-3">
+                        <p className="text-sm font-medium text-dark-600">Skills Analysis</p>
+                        {selectedScore.skills_match.matched?.length > 0 && (
+                          <div>
+                            <p className="text-xs text-dark-400 mb-1">Matching Skills</p>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedScore.skills_match.matched.map((skill) => (
+                                <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
+                                  <CheckCircle className="w-3 h-3" />
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedScore.skills_match.missing?.length > 0 && (
+                          <div>
+                            <p className="text-xs text-dark-400 mb-1">Missing Skills (Consider Learning)</p>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedScore.skills_match.missing.map((skill) => (
+                                <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
+                                  <XCircle className="w-3 h-3" />
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedScore.strengths?.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-dark-600 mb-2">Your Strengths</p>
+                        <ul className="text-sm text-dark-500 space-y-1">
+                          {selectedScore.strengths.map((s, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-green-500 mt-0.5">+</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedScore.improvements?.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-dark-600 mb-2">Areas to Improve</p>
+                        <ul className="text-sm text-dark-500 space-y-1">
+                          {selectedScore.improvements.map((s, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-amber-500 mt-0.5">-</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedScore.application_tips && selectedScore.application_tips.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-dark-600 mb-2">Application Tips</p>
+                        <ul className="text-sm text-dark-500 space-y-1">
+                          {selectedScore.application_tips.map((tip, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-primary-500 mt-0.5">•</span> {tip}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedScore.recruiter_perspective && (
+                      <div className="pt-3 border-t border-cream-200">
+                        <p className="text-sm font-medium text-dark-600 mb-2">Recruiter&apos;s Perspective</p>
+                        <p className="text-sm text-dark-500 italic">
+                          &quot;{selectedScore.recruiter_perspective}&quot;
+                        </p>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Skills Analysis */}
-                  {matchScores[selectedJob.id].skills_match && (
-                    <div className="pt-4 border-t border-cream-200 space-y-3">
-                      <p className="text-sm font-medium text-dark-600">Skills Analysis</p>
-                      {matchScores[selectedJob.id].skills_match!.matched?.length > 0 && (
-                        <div>
-                          <p className="text-xs text-dark-400 mb-1">Matching Skills</p>
-                          <div className="flex flex-wrap gap-2">
-                            {matchScores[selectedJob.id].skills_match!.matched.map((skill) => (
-                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
-                                <CheckCircle className="w-3 h-3" />
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {matchScores[selectedJob.id].skills_match!.missing?.length > 0 && (
-                        <div>
-                          <p className="text-xs text-dark-400 mb-1">Missing Skills (Consider Learning)</p>
-                          <div className="flex flex-wrap gap-2">
-                            {matchScores[selectedJob.id].skills_match!.missing.map((skill) => (
-                              <span key={skill} className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
-                                <XCircle className="w-3 h-3" />
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {matchScores[selectedJob.id].strengths?.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-dark-600 mb-2">Your Strengths</p>
-                      <ul className="text-sm text-dark-500 space-y-1">
-                        {matchScores[selectedJob.id].strengths.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">+</span> {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {matchScores[selectedJob.id].improvements?.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-dark-600 mb-2">Areas to Improve</p>
-                      <ul className="text-sm text-dark-500 space-y-1">
-                        {matchScores[selectedJob.id].improvements.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-amber-500 mt-0.5">-</span> {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {matchScores[selectedJob.id].application_tips?.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-dark-600 mb-2">Application Tips</p>
-                      <ul className="text-sm text-dark-500 space-y-1">
-                        {matchScores[selectedJob.id].application_tips!.map((tip, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-primary-500 mt-0.5">•</span> {tip}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {matchScores[selectedJob.id].recruiter_perspective && (
-                    <div className="pt-3 border-t border-cream-200">
-                      <p className="text-sm font-medium text-dark-600 mb-2">Recruiter&apos;s Perspective</p>
-                      <p className="text-sm text-dark-500 italic">
-                        &quot;{matchScores[selectedJob.id].recruiter_perspective}&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                );
+              })()}
 
               {/* Job Description */}
               {selectedJob.description && (

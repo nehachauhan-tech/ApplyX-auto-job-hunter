@@ -138,119 +138,6 @@
           "note": "Preview pricing - check official docs for current rates"
         }
       }
-    },
-    "gemmaFamily": {
-      "gemma-4-31b-it": {
-        "modelId": "gemma-4-31b-it",
-        "name": "Gemma 4 31B",
-        "status": "stable",
-        "parameters": "31B",
-        "description": "Gemma 4 dense model with 31 billion parameters. Open weights model for self-hosting.",
-        "bestUseCase": "Self-hosted deployments, fine-tuning, research, on-premise solutions",
-        "capabilities": [
-          "text generation",
-          "instruction following",
-          "open weights",
-          "fine-tunable"
-        ],
-        "pricing": {
-          "note": "Open weights - free to use, compute costs apply for API access"
-        }
-      },
-      "gemma-4-26b-a4b-it": {
-        "modelId": "gemma-4-26b-a4b-it",
-        "name": "Gemma 4 26B MoE",
-        "status": "stable",
-        "parameters": "26B total, 4B active",
-        "description": "Gemma 4 Mixture of Experts model with 26B total parameters but only 4B active per inference.",
-        "bestUseCase": "Efficient self-hosted deployments, resource-constrained environments, cost-effective inference",
-        "capabilities": [
-          "text generation",
-          "instruction following",
-          "open weights",
-          "efficient inference",
-          "MoE architecture"
-        ],
-        "pricing": {
-          "note": "Open weights - free to use, compute costs apply for API access"
-        }
-      }
-    },
-    "specializedModels": {
-      "computer-use": {
-        "modelId": "gemini-3.1-computer-use-preview",
-        "name": "Computer Use",
-        "status": "preview",
-        "description": "UI automation and browser task execution capabilities.",
-        "bestUseCase": "Browser automation, UI testing, web scraping, automated workflows",
-        "capabilities": [
-          "UI automation",
-          "browser control",
-          "screenshot understanding",
-          "web navigation"
-        ]
-      },
-      "deep-research": {
-        "modelId": "deep-research-preview-04-2026",
-        "name": "Deep Research",
-        "status": "preview",
-        "description": "Multi-step research capabilities for comprehensive analysis.",
-        "bestUseCase": "In-depth research, comprehensive analysis, multi-source information gathering",
-        "capabilities": [
-          "multi-step research",
-          "source synthesis",
-          "comprehensive analysis"
-        ]
-      },
-      "deep-research-max": {
-        "modelId": "deep-research-max-preview-04-2026",
-        "name": "Deep Research Max",
-        "status": "preview",
-        "description": "Maximum comprehensiveness research model.",
-        "bestUseCase": "Exhaustive research, academic-grade analysis, maximum depth investigations",
-        "capabilities": [
-          "exhaustive research",
-          "maximum comprehensiveness",
-          "deep analysis"
-        ]
-      },
-      "embeddings": {
-        "modelId": "gemini-embedding-2",
-        "name": "Gemini Embedding 2",
-        "status": "stable",
-        "description": "Multimodal embeddings for semantic search and similarity.",
-        "bestUseCase": "Semantic search, RAG applications, similarity matching, vector databases",
-        "capabilities": [
-          "text embeddings",
-          "multimodal embeddings",
-          "semantic similarity"
-        ]
-      }
-    },
-    "mediaGeneration": {
-      "imagen": {
-        "modelId": "imagen",
-        "name": "Imagen 4",
-        "status": "stable",
-        "description": "Text-to-image generation up to 2K resolution.",
-        "bestUseCase": "Image generation, visual content creation, marketing assets",
-        "capabilities": [
-          "text-to-image",
-          "2K resolution",
-          "high quality imagery"
-        ]
-      },
-      "veo-3.1": {
-        "modelId": "veo-3.1-generate-preview",
-        "name": "Veo 3.1",
-        "status": "preview",
-        "description": "Cinematic video generation capabilities.",
-        "bestUseCase": "Video generation, cinematic content, marketing videos",
-        "capabilities": [
-          "video generation",
-          "cinematic quality"
-        ]
-      }
     }
   },
   "recommendedModels": {
@@ -261,15 +148,8 @@
     "coding": "gemini-3.1-pro-preview",
     "multimodal": "gemini-3.5-flash",
     "costEffective": "gemini-3.1-flash-lite-preview",
-    "imageGeneration": "gemini-3.1-flash-image-preview",
-    "embeddings": "gemini-embedding-2"
+    "imageGeneration": "gemini-3.1-flash-image-preview"
   },
-  "deprecatedModels": [
-    "gemini-2.5-*",
-    "gemini-2.0-*",
-    "gemini-1.5-*",
-    "gemini-1.0-*"
-  ],
   "notes": {
     "sdkMigration": "Use @google/genai SDK. The old @google/generative-ai SDK is deprecated.",
     "freeTier": "All models offer free tier usage with limited features.",
